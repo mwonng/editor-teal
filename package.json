@@ -1,0 +1,27 @@
+{
+  "name": "editor-vanilla",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "start": "parcel index.html --open",
+    "build": "parcel build index.html"
+  },
+  "dependencies": {
+    "parcel-bundler": "^1.6.1",
+    "prosemirror-example-setup": "1.2.1",
+    "prosemirror-model": "1.18.3",
+    "prosemirror-schema-basic": "1.2.0",
+    "prosemirror-schema-list": "1.2.2",
+    "prosemirror-state": "1.4.2",
+    "prosemirror-view": "1.29.1"
+  },
+  "devDependencies": {
+    "@babel/core": "7.2.0",
+    "typescript": "4.4.4"
+  },
+  "resolutions": {
+    "@babel/preset-env": "7.13.8"
+  },
+  "keywords": []
+}

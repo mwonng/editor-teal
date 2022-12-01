@@ -1,0 +1,43 @@
+body {
+  font-family: sans-serif;
+}
+
+#free-style {
+  /* border: 1px #ccc solid; */
+  padding: 5px;
+  border-radius: 4px;
+  outline-color: #719ece;
+}
+
+h1.withTagName::before {
+  content: "###";
+  color: teal;
+  font-size: 0.8em;
+}
+
+.description {
+  color: #aaa;
+}
+
+.container {
+  border: 1px #ccc solid;
+  border-radius: 4px;
+  padding: 0px 10px;
+}
+
+.heading-tag {
+  font-size: 0.6em;
+  color: #719ece;
+}
+.ProseMirror {
+  position: relative;
+}
+
+.ProseMirror {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  white-space: break-spaces;
+  -webkit-font-variant-ligatures: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0; /* the above doesn't seem to work in Edge */
+}
