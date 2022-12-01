@@ -3,17 +3,42 @@ body {
 }
 
 #free-style {
-  /* border: 1px #ccc solid; */
+  border: 1px #ccc solid;
   padding: 5px;
   border-radius: 4px;
   outline-color: #719ece;
 }
 
-h1.withTagName::before {
-  content: "###";
-  color: teal;
-  font-size: 0.8em;
+.hide {
+  display: none;
 }
+
+.show {
+  display: inline;
+}
+
+.withTagName {
+  color: teal;
+  font-size: 1em;
+}
+
+
+h1 .heading-tag {
+  color: teal;
+  font-size: 1.5rem;
+}
+
+h2 .heading-tag {
+  color: teal;
+  font-size: 1.2rem;
+}
+
+h3 .heading-tag {
+  color: teal;
+  font-size: 1rem;
+}
+
+
 
 .description {
   color: #aaa;
@@ -25,10 +50,6 @@ h1.withTagName::before {
   padding: 0px 10px;
 }
 
-.heading-tag {
-  font-size: 0.6em;
-  color: #719ece;
-}
 .ProseMirror {
   position: relative;
 }
