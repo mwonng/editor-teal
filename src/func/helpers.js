@@ -17,12 +17,11 @@ export function onChange(e) {
   const anchorOffset = window.getSelection().anchorOffset;
   const oldTagNmae =  e.target.tagName
 
-  console.log(anchorOffset)
+  // heading triggers
   if (
     content.match(/^#\s/) &&
     currNode.tagName !== headingKeyBindingSet.h1.tag
   ) {
-    debugger
     const lengthOfTag = headingKeyBindingSet.h1.shortcut.length
     // heading one
     currNode.innerText = content.replace("#", "");
@@ -68,6 +67,18 @@ export function onChange(e) {
     console.log("should go to ",anchorOffset)
   }
 
+  // TODO: links
+
+  // TODO: bold 
+
+  // TODO: italic
+  
+  // TODO: quote
+  
+  // TODO: hr
+  
+  // code ?
+
   // p tag
   if (!/^#+\s/.test(content) && currNode.tagName !== "P") {
     let n = changeTagName(currNode, "p", oldTagNmae);
@@ -87,12 +98,10 @@ function changeTagName(el, newTagName) {
   for (var i = 0, len = attr.length; i < len; ++i) {
     n.setAttribute(attr[i].name, attr[i].value);
   }
-  // n.innerText = el.innerText;
   el.parentNode.replaceChild(n, el);
 
   let tagSpan = createEditableTag('span','heading-tag')
 
-  debugger
   if (newTagName.toUpperCase() === 'P') {
     n.innerText = el.innerText;
   } else {
@@ -106,7 +115,6 @@ function changeTagName(el, newTagName) {
     n.append(tagSpan, textSpan);
   }
   return n;
-
 }
 
 
@@ -145,24 +153,7 @@ export function onFocus(e) {
   }
 }
 
-
-// function moveCaret(win, charCount) {
-//   var sel;
-//   if (win.getSelection) {
-//     sel = win.getSelection();
-//     console.log("sel", sel)
-//     if (sel.rangeCount > 0) {
-//       console.log("rangeCount > 0", sel)
-//       var textNode = sel.focusNode;
-//       var newOffset = sel.focusOffset + charCount;
-//       sel.collapse(textNode, Math.min(textNode.length, newOffset));
-//     }
-//   }
-// }
-
 function removeTags(tag, e) {
-  // e.target.innerText = e.target
-  //   .innerText.replace(tag, "");
   console.log(e.target)
   if (e.target.firstChild && e.target.firstChild.classList) {
     e.target.firstChild.classList.remove('show')
@@ -171,14 +162,6 @@ function removeTags(tag, e) {
 }
 
 function addTags(tag, e) {
-  // let oldText = e.target.innerText;
-  // let tagSpan = createEditableTag('span','heading-tag')
-  // tagSpan.innerText= ""
-  // e.target.innerText=""
-  // let textSpan = createEditableTag('span','heading-one')
-  // textSpan.innerText= oldText
-  // // e.target.innerText = `${tag} ${oldText}`;
-  // e.target.append(tagSpan, textSpan);
   if (e.target.firstChild && e.target.firstChild.classList) {
     e.target.firstChild.classList.remove('hide')
     e.target.firstChild.classList.add('show')
