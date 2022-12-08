@@ -10,7 +10,6 @@ export function onChange(e) {
   let content = getSeclectedMainNode(currNode).innerText;
   const selection = window.getSelection();
   const anchorOffset = window.getSelection().anchorOffset;
-  const oldTagNmae = e.target.tagName;
 
   console.log("----");
   console.log(e);
@@ -28,59 +27,18 @@ export function onChange(e) {
     }
   }
   // heading triggers
-  if (
-    content.match(/^#\s/) &&
-    getSectionNodeName(currNode) !== "H1" &&
-    e.data !== null
-  ) {
-    const lengthOfTag = headingKeyBindingSet.h1.shortcut.length;
-    // heading one
-    currNode.innerText = content.replace("#", "");
-    let n = changeTagName(currNode, "h1", oldTagNmae);
-    bindingListeners(n);
-    let sel = window.getSelection();
-
-    sel.setBaseAndExtent(
-      n.lastChild.firstChild,
-      anchorOffset - lengthOfTag,
-      n.lastChild.firstChild,
-      anchorOffset - lengthOfTag
-    );
-    console.log("should go to ", anchorOffset);
+  if (content.match(/^#\s/) && getSectionNodeName(currNode) !== "H1") {
+    setMarkup("h1", headingKeyBindingSet.h1, anchorOffset);
   }
 
-  // if (
-  //   content.match(/^##\s/) &&
-  //   currNode.tagName !== headingKeyBindingSet.h2.tag
-  // ) {
-  //   const lengthOfTag = headingKeyBindingSet.h2.shortcut.length
+  if (content.match(/^##\s/) && getSectionNodeName(currNode) !== "H2") {
+    debugger;
+    setMarkup("h2", headingKeyBindingSet.h2, anchorOffset);
+  }
 
-  //   // heading two
-  //   currNode.innerText = content.replace("##", "");
-
-  //   let n = changeTagName(currNode, "h2",oldTagNmae);
-  //   // n.focus();
-
-  //   let sel = window.getSelection()
-  //   sel.setBaseAndExtent(n.lastChild.firstChild, anchorOffset-lengthOfTag, n.lastChild.firstChild, anchorOffset-lengthOfTag)
-  //   console.log("should go to ",anchorOffset)
-  // }
-
-  // if (
-  //   content.match(/^###\s/) &&
-  //   currNode.tagName !== headingKeyBindingSet.h1.tag
-  // ) {
-  //   const lengthOfTag = headingKeyBindingSet.h2.shortcut.length
-
-  //   // heading two
-  //   currNode.innerText = content.replace("###", "");
-  //   let n = changeTagName(currNode, "h3");
-  //   // n.focus();
-
-  //   let sel = window.getSelection()
-  //   sel.setBaseAndExtent(n.lastChild.firstChild, anchorOffset-lengthOfTag, n.lastChild.firstChild, anchorOffset-lengthOfTag)
-  //   console.log("should go to ",anchorOffset)
-  // }
+  if (content.match(/^###\s/) && getSectionNodeName(currNode) !== "H3") {
+    setMarkup("h3", headingKeyBindingSet.h3, anchorOffset);
+  }
 
   // TODO: links
 
@@ -101,7 +59,8 @@ export function onChange(e) {
     getSectionNodeName(currNode) !== "P"
     // e.data !== null
   ) {
-    let n = changeTagName(getSeclectedMainNode(currNode), "p", oldTagNmae);
+    let content = getSeclectedMainNode(currNode).innerText;
+    let n = changeTagName(getSeclectedMainNode(currNode), "p", content);
     // n.focus();
     let sel = window.getSelection();
     sel.setBaseAndExtent(
@@ -114,21 +73,17 @@ export function onChange(e) {
   }
 }
 
-function changeTagName(el, newTagName) {
+function changeTagName(el, newTagName, innerText) {
   var n = document.createElement(newTagName);
   let sectionParentEl;
   // bindingListeners(n)
   var attr = el.attributes;
-
+  debugger;
   for (var i = 0, len = attr.length; i < len; ++i) {
     n.setAttribute(attr[i].name, attr[i].value);
   }
 
-  if (el.tagName === "SPAN") {
-    sectionParentEl = el.parentNode;
-  } else {
-    sectionParentEl = el;
-  }
+  sectionParentEl = getSeclectedMainNode(el);
 
   sectionParentEl.parentNode.replaceChild(n, el);
 
@@ -136,13 +91,13 @@ function changeTagName(el, newTagName) {
   let tagSpan = createEditableTag("span", "heading-tag");
 
   if (newTagName.toUpperCase() === "P") {
-    n.innerText = el.innerText;
+    n.innerText = innerText;
   } else {
     let mdtag = headingKeyBindingSet[newTagName].shortcut;
     tagSpan.innerText = mdtag;
 
     let textSpan = createEditableTag("span", "heading-one");
-    textSpan.innerText = el.innerText;
+    textSpan.innerText = innerText;
 
     n.append(tagSpan, textSpan);
   }
@@ -266,4 +221,32 @@ function getSeclectedMainNode(currNode) {
 
 function hasLineBreak(text) {
   return /\n/.test(text);
+}
+
+function setMarkup(tagName, tagConfig, anchorOffset) {
+  debugger;
+  const currNode = getSelectionNode();
+  let content = getSeclectedMainNode(currNode).innerText;
+  const lengthOfTag = tagConfig.shortcut.length;
+
+  currNode.innerText = content.replace(tagConfig.shortcut, "");
+  console.log("currNode.innerText", currNode.innerText);
+  console.log("currNode.innerText", content.replace(tagConfig.shortcut, ""));
+
+  let n = changeTagName(
+    getSeclectedMainNode(currNode),
+    tagName,
+    content.replace(tagConfig.shortcut, "")
+  );
+
+  bindingListeners(n);
+
+  const sel = window.getSelection();
+
+  sel.setBaseAndExtent(
+    n.lastChild.firstChild,
+    anchorOffset - lengthOfTag,
+    n.lastChild.firstChild,
+    anchorOffset - lengthOfTag
+  );
 }
