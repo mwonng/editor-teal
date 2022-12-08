@@ -4,10 +4,16 @@ body {
 
 #free-style {
   border: 1px #ccc solid;
-  padding: 5px;
   border-radius: 4px;
   outline-color: #719ece;
-  margin: 10px 5px;
+}
+
+p {
+  line-height: 2rem;
+  font-size: 1.2rem;
+  height: 2rem;
+  margin: 5px 10px;
+  padding: 5px;
 }
 
 .hide {
@@ -24,6 +30,12 @@ body {
 }
 
 
+h1,
+h2,
+h3 {
+  outline-style: none;
+  padding: 0 10px;
+}
 h1 .heading-tag {
   color: teal;
   font-size: 1.5rem;
