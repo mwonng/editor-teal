@@ -1,5 +1,20 @@
 import { headingKeyBindingSet } from "./const";
+import {
+  getAnchorFocusNode,
+  getAnchorFocusNodeSize,
+  getAnchorOffset,
+  hasInlineMarkInText,
+  isHeadingTag,
+  isInlineTag,
+  showTags,
+  createEditableTag,
+  getEditorElement,
+  addNewParagraph,
+  hasInlineMarkAround,
+} from "./utils";
+
 let lastVisitedNode, currentVisitingNode;
+
 function getSelectionNode() {
   var node = document.getSelection().anchorNode;
   return node.nodeType === 3 ? node.parentNode : node;
@@ -138,48 +153,6 @@ function hideTags(node) {
   }
 }
 
-function showTags(node) {
-  if (isInlineTag(node)) {
-    console.log("%cgoing to add tags", "color: blue");
-    node.previousSibling.classList.remove("hide");
-    node.previousSibling.classList.add("show");
-    node.nextSibling.classList.remove("hide");
-    node.nextSibling.classList.add("show");
-  }
-  if (node.firstChild && node.firstChild.classList) {
-    node.firstChild.classList.remove("hide");
-    node.firstChild.classList.add("show");
-  }
-}
-
-function createEditableTag(tagName, className) {
-  let newTag = document.createElement(tagName.toUpperCase());
-  // newTag.contentEditable = "true";
-
-  if (className) {
-    newTag.classList.add(className);
-  }
-
-  return newTag;
-}
-
-export function getEditorElement() {
-  return document.getElementById("free-style");
-}
-
-export function addNewParagraph(text) {
-  const editorRoot = getEditorElement();
-  const newParagraph = document.createElement("p");
-
-  if (text) {
-    newParagraph.innerHTML = text;
-  }
-  editorRoot.append(newParagraph);
-  let sel = window.getSelection();
-  sel.setBaseAndExtent(newParagraph, 0, newParagraph, 0);
-  return newParagraph;
-}
-
 // bindings!!
 export function bindingListeners(node) {
   let allListeners = [
@@ -201,11 +174,11 @@ function getSectionNodeName(currNode) {
 }
 
 function getSeclectedMainNode(currNode) {
-  const node = currNode.nodeType === 3 ? node.parentNode : node;
-  if (currNode.tagName === "SPAN") {
-    return currNode.parentNode;
+  const node = currNode.nodeType === 3 ? currNode.parentNode : currNode;
+  if (node.tagName === "SPAN") {
+    return node.parentNode;
   }
-  return currNode;
+  return node;
 }
 
 function setMarkup(tagName, tagConfig, anchorOffset) {
@@ -237,13 +210,20 @@ function setMarkup(tagName, tagConfig, anchorOffset) {
 }
 
 function onMouseClick(e) {
-  const targetNode = e.target;
   const anchorNode = window.getSelection().anchorNode;
-  const targetText = e.target.innerText;
   updateActiveNode(anchorNode);
-  // console.log("onMouseClick", e);
-  // console.log(targetNode);
-  // console.log(targetText);
+  // leave from inline bolder
+
+  // when mouse click out from a inline element
+
+  if (lastVisitedNode && isInlineTag(getSeclectedMainNode(lastVisitedNode))) {
+    hideTags(lastVisitedNode);
+  }
+
+  // when mouse click into a inline element
+  if (isInlineTag(getSeclectedMainNode(anchorNode))) {
+    showTags(anchorNode);
+  }
 }
 
 function updateActiveNode(node) {
@@ -251,6 +231,7 @@ function updateActiveNode(node) {
   lastVisitedNode = currentVisitingNode;
   currentVisitingNode = node;
   const currNode = window.getSelection().anchorNode;
+
   if (lastVisitedNode && currentVisitingNode != lastVisitedNode) {
     console.log("-----");
     console.log(
@@ -310,13 +291,23 @@ function updateActiveNode(node) {
   // inside
 
   if (isInlineTag(getSelectionNode(currentVisitingNode))) {
-    console.log("inside inline tags");
-    // console.log("inside b tag", getSelectionNode(currentVisitingNode));
-    if (getSelectionNode(currentVisitingNode).tagName === "B") {
-      addInlineMarkup("P", "**", currentVisitingNode);
-    }
-    if (getSelectionNode(currentVisitingNode).tagName === "I") {
-      addInlineMarkup("P", "_", currentVisitingNode);
+    const mainNode = getSeclectedMainNode(currentVisitingNode);
+    console.log(
+      "inside inline tags",
+      getSeclectedMainNode(currentVisitingNode)
+    );
+    debugger;
+    const hasBoldMark = /\*\*\D+\*\*/.test(mainNode.innerText);
+    const hasItalicMark = /\_\D+\_/.test(mainNode.innerText);
+
+    if (!hasBoldMark && !hasItalicMark) {
+      // console.log("inside b tag", getSelectionNode(currentVisitingNode));
+      if (getSelectionNode(currentVisitingNode).tagName === "B") {
+        addInlineMarkup("P", "**", currentVisitingNode);
+      }
+      if (getSelectionNode(currentVisitingNode).tagName === "I") {
+        addInlineMarkup("P", "_", currentVisitingNode);
+      }
     }
   }
 
@@ -409,30 +400,13 @@ function onKeyPressed(e) {
   // }
 }
 
-function isInlineTag(node) {
-  if (!node) {
-    return false;
-  }
-  // debugger;
-  const inlineTags = ["B", "I"];
-
-  if (node.nodeName === "#text") {
-    return inlineTags.includes(node.parentNode.tagName);
-  }
-  return inlineTags.includes(node.tagName);
-}
-
-function isHeadingTag(node) {
-  const inlineTags = ["H1", "H2", "H3", "H4"];
-  return inlineTags.includes(node);
-}
-
 function addInlineMarkup(tagName, symbol, node) {
   // console.log("inline currNode", currNode);
 
-  const hasMark = /\*\D+\*/.test(node.innerText);
+  const hasBoldMark = /\*\*\D+\*\*/.test(node.innerText);
+  const hasItalicMark = /\_\D+\_/.test(node.innerText);
 
-  if (hasMark) {
+  if (hasBoldMark || hasItalicMark) {
     return;
   }
   if (hasInlineMarkAround(node)) {
@@ -531,45 +505,4 @@ function addInlineMarkup(tagName, symbol, node) {
   //   n.lastChild.firstChild,
   //   anchorOffset - lengthOfTag
   // );
-}
-
-function hasInlineMarkAround(node) {
-  // console.log("-- hasInlineMarkAround node--", node);
-  // console.log("-- hasInlineMarkAround same?--", node == getAnchorFocusNode());
-
-  const marks = ["*", "**", "_", "__"];
-  if (!node.nextSibling || !node.previousSibling) {
-    return false;
-  }
-
-  // console.log("next sibling", node.nextSibling.nodeType);
-  // console.log("prev sibling", node.previousSibling.nodeType);
-  return (
-    node.nextSibling.nodeType === node.previousSibling.nodeType &&
-    node.nextSibling.innerText === node.previousSibling.innerText &&
-    marks.includes(node.nextSibling.innerText) &&
-    marks.includes(node.previousSibling.innerText)
-  );
-}
-
-function hasInlineMarkInText(text) {
-  const marks = ["*", "**", "_", "__"];
-  return marks.includes(text);
-}
-
-function getAnchorFocusNode() {
-  return window.getSelection().anchorNode;
-}
-
-function getAnchorFocusNodeSize() {
-  const anchorNode = getAnchorFocusNode();
-  if (anchorNode.nodeType === 3) {
-    return anchorNode.length;
-  }
-
-  return anchorNode.innerText.length;
-}
-
-function getAnchorOffset() {
-  return window.getSelection().anchorOffset;
 }

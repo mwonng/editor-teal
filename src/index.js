@@ -1,5 +1,6 @@
 import "./styles.css";
-import { addNewParagraph, bindingListeners } from "./func/helpers";
+import { bindingListeners } from "./func/helpers";
+import { addNewParagraph } from "./func/utils";
 
 document.getElementById("app").innerHTML = `
 <h1>JS loaded!</h1>
