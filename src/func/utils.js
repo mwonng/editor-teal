@@ -1,3 +1,21 @@
+export function getSelectionNode() {
+  var node = document.getSelection().anchorNode;
+  return node.nodeType === 3 ? node.parentNode : node;
+}
+
+export function getMainElementTagName(currNode) {
+  const mainElement = getSeclectedMainNode(currNode);
+  return mainElement.tagName;
+}
+
+export function getSeclectedMainNode(currNode) {
+  const node = currNode.nodeType === 3 ? currNode.parentNode : currNode;
+  if (node.tagName === "SPAN") {
+    return node.parentNode;
+  }
+  return node;
+}
+
 export function getAnchorFocusNode() {
   return window.getSelection().anchorNode;
 }
@@ -20,9 +38,9 @@ export function hasInlineMarkInText(text) {
   return marks.includes(text);
 }
 
-export function isHeadingTag(node) {
+export function isHeadingTag(tagName) {
   const inlineTags = ["H1", "H2", "H3", "H4"];
-  return inlineTags.includes(node);
+  return inlineTags.includes(tagName);
 }
 
 export function isInlineTag(node) {
@@ -46,9 +64,27 @@ export function showTags(node) {
     node.nextSibling.classList.remove("hide");
     node.nextSibling.classList.add("show");
   }
-  if (node.firstChild && node.firstChild.classList) {
+  if (
+    isHeadingTag(getMainElementTagName(node)) &&
+    node.firstChild &&
+    node.firstChild.classList
+  ) {
     node.firstChild.classList.remove("hide");
     node.firstChild.classList.add("show");
+  }
+}
+
+export function hideTags(node) {
+  console.log("hideTags", node);
+  if (isInlineTag(node)) {
+    node.previousSibling.classList.remove("show");
+    node.previousSibling.classList.add("hide");
+    node.nextSibling.classList.remove("show");
+    node.nextSibling.classList.add("hide");
+  }
+  if (node.firstChild && node.firstChild.classList) {
+    node.firstChild.classList.remove("show");
+    node.firstChild.classList.add("hide");
   }
 }
 

@@ -51,6 +51,9 @@ h3 .heading-tag {
   font-size: 1rem;
 }
 
+.bold-tag {
+  color: rebeccapurple;
+}
 .description {
   color: #aaa;
   margin: 0;

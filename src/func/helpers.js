@@ -1,24 +1,23 @@
 import { headingKeyBindingSet } from "./const";
 import {
+  addNewParagraph,
+  createEditableTag,
   getAnchorFocusNode,
   getAnchorFocusNodeSize,
   getAnchorOffset,
+  getEditorElement,
+  getSeclectedMainNode,
+  getSelectionNode,
+  getMainElementTagName,
+  hasInlineMarkAround,
   hasInlineMarkInText,
+  hideTags,
   isHeadingTag,
   isInlineTag,
   showTags,
-  createEditableTag,
-  getEditorElement,
-  addNewParagraph,
-  hasInlineMarkAround,
 } from "./utils";
 
 let lastVisitedNode, currentVisitingNode;
-
-function getSelectionNode() {
-  var node = document.getSelection().anchorNode;
-  return node.nodeType === 3 ? node.parentNode : node;
-}
 
 export function onChange(e) {
   const currNode = getSelectionNode();
@@ -43,15 +42,15 @@ export function onChange(e) {
     }
   }
   // heading triggers
-  if (content.match(/^#\s/) && getSectionNodeName(currNode) !== "H1") {
+  if (content.match(/^#\s/) && currNode !== "H1") {
     setMarkup("h1", headingKeyBindingSet.h1, anchorOffset);
   }
 
-  if (content.match(/^##\s/) && getSectionNodeName(currNode) !== "H2") {
+  if (content.match(/^##\s/) && getMainElementTagName(currNode) !== "H2") {
     setMarkup("h2", headingKeyBindingSet.h2, anchorOffset);
   }
 
-  if (content.match(/^###\s/) && getSectionNodeName(currNode) !== "H3") {
+  if (content.match(/^###\s/) && getMainElementTagName(currNode) !== "H3") {
     setMarkup("h3", headingKeyBindingSet.h3, anchorOffset);
   }
 
@@ -67,14 +66,14 @@ export function onChange(e) {
 
   // code ?
 
-  if (getSectionNodeName(currNode) === "P") {
+  if (getMainElementTagName(currNode) === "P") {
     return;
   }
 
   // p tag
   // if (
   //   !/^#+\s/.test(content) &&
-  //   getSectionNodeName(currNode) !== "P" &&
+  //   getMainElementTagName(currNode) !== "P" &&
   //   !isInlineTag(currNode)
   // ) {
   //   debugger;
@@ -139,20 +138,6 @@ export function onBlur(e) {
   }
 }
 
-function hideTags(node) {
-  console.log("hideTags", node);
-  if (isInlineTag(node)) {
-    node.previousSibling.classList.remove("show");
-    node.previousSibling.classList.add("hide");
-    node.nextSibling.classList.remove("show");
-    node.nextSibling.classList.add("hide");
-  }
-  if (node.firstChild && node.firstChild.classList) {
-    node.firstChild.classList.remove("show");
-    node.firstChild.classList.add("hide");
-  }
-}
-
 // bindings!!
 export function bindingListeners(node) {
   let allListeners = [
@@ -163,22 +148,6 @@ export function bindingListeners(node) {
   ];
 
   allListeners.forEach((item) => node.addEventListener(item.key, item.action));
-}
-
-function getSectionNodeName(currNode) {
-  console.log("getSectionNodeName", currNode);
-  if (currNode && currNode.parentNode && currNode.tagName === "SPAN") {
-    return currNode.parentNode.tagName;
-  }
-  return currNode.tagName;
-}
-
-function getSeclectedMainNode(currNode) {
-  const node = currNode.nodeType === 3 ? currNode.parentNode : currNode;
-  if (node.tagName === "SPAN") {
-    return node.parentNode;
-  }
-  return node;
 }
 
 function setMarkup(tagName, tagConfig, anchorOffset) {
@@ -296,7 +265,6 @@ function updateActiveNode(node) {
       "inside inline tags",
       getSeclectedMainNode(currentVisitingNode)
     );
-    debugger;
     const hasBoldMark = /\*\*\D+\*\*/.test(mainNode.innerText);
     const hasItalicMark = /\_\D+\_/.test(mainNode.innerText);
 
@@ -349,7 +317,6 @@ function updateActiveNode(node) {
 function onKeyPressed(e) {
   // const currNode = getSelectionNode();
   const currNode = window.getSelection().anchorNode;
-  console.log("!!!!!!!!! key press -> currentNode", currNode);
   // let node = getSeclectedMainNode(currNode);
   // debugger;
   updateActiveNode(currNode);
@@ -428,9 +395,9 @@ function addInlineMarkup(tagName, symbol, node) {
 
   // console.log("addInlineMarkup beforeText", beforeText);
   // console.log("addInlineMarkup afterText", afterText);
-  const beforeSpan = document.createElement("span");
+  const beforeSpan = createEditableTag("span");
   beforeSpan.innerText = beforeText.nodeValue;
-  const afterSpan = document.createElement("span");
+  const afterSpan = createEditableTag("span");
   afterSpan.innerText = afterText.nodeValue;
 
   const grandpaNode = inlineElement.parentNode;
@@ -452,7 +419,7 @@ function addInlineMarkup(tagName, symbol, node) {
     );
   }
 
-  const inlineTagLeftNode = document.createElement("span");
+  const inlineTagLeftNode = createEditableTag("span", "bold-tag");
   inlineTagLeftNode.innerText = symbol;
   const inlineTagRightNode = inlineTagLeftNode.cloneNode(true);
   let inlineTagNode;
