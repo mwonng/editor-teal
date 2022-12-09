@@ -1,5 +1,5 @@
 import { headingKeyBindingSet } from "./const";
-
+let lastVisitedNode, currentVisitingNode;
 function getSelectionNode() {
   var node = document.getSelection().anchorNode;
   return node.nodeType === 3 ? node.parentNode : node;
@@ -11,9 +11,10 @@ export function onChange(e) {
   const selection = window.getSelection();
   const anchorOffset = window.getSelection().anchorOffset;
 
-  console.log("----");
-  console.log(e);
-  console.log("current content", content);
+  updateActiveNode(getSeclectedMainNode(currNode));
+  // console.log("----");
+  // console.log(e);
+  // console.log("current content", content);
 
   if (e.inputType == "deleteContentBackward" && content.trim() == "") {
     currNode.innerText = currNode.innerText.trim();
@@ -32,7 +33,6 @@ export function onChange(e) {
   }
 
   if (content.match(/^##\s/) && getSectionNodeName(currNode) !== "H2") {
-    debugger;
     setMarkup("h2", headingKeyBindingSet.h2, anchorOffset);
   }
 
@@ -52,25 +52,29 @@ export function onChange(e) {
 
   // code ?
 
-  // p tag
-  debugger;
-  if (
-    !/^#+\s/.test(content) &&
-    getSectionNodeName(currNode) !== "P"
-    // e.data !== null
-  ) {
-    let content = getSeclectedMainNode(currNode).innerText;
-    let n = changeTagName(getSeclectedMainNode(currNode), "p", content);
-    // n.focus();
-    let sel = window.getSelection();
-    sel.setBaseAndExtent(
-      n.firstChild,
-      anchorOffset,
-      n.firstChild,
-      anchorOffset
-    );
-    console.log("should go to ", anchorOffset);
+  if (getSectionNodeName(currNode) === "P") {
+    return;
   }
+
+  // p tag
+  // if (
+  //   !/^#+\s/.test(content) &&
+  //   getSectionNodeName(currNode) !== "P" &&
+  //   !isInlineTag(currNode)
+  // ) {
+  //   debugger;
+  //   let content = getSeclectedMainNode(currNode).innerText;
+  //   let n = changeTagName(getSeclectedMainNode(currNode), "p", content);
+  //   // n.focus();
+  //   let sel = window.getSelection();
+  //   sel.setBaseAndExtent(
+  //     n.firstChild,
+  //     anchorOffset,
+  //     n.firstChild,
+  //     anchorOffset
+  //   );
+  //   console.log("should go to ", anchorOffset);
+  // }
 }
 
 function changeTagName(el, newTagName, innerText) {
@@ -78,7 +82,7 @@ function changeTagName(el, newTagName, innerText) {
   let sectionParentEl;
   // bindingListeners(n)
   var attr = el.attributes;
-  debugger;
+  // debugger;
   for (var i = 0, len = attr.length; i < len; ++i) {
     n.setAttribute(attr[i].name, attr[i].value);
   }
@@ -87,7 +91,6 @@ function changeTagName(el, newTagName, innerText) {
 
   sectionParentEl.parentNode.replaceChild(n, el);
 
-  debugger;
   let tagSpan = createEditableTag("span", "heading-tag");
 
   if (newTagName.toUpperCase() === "P") {
@@ -109,48 +112,43 @@ export function onBlur(e) {
 
   switch (tag) {
     case headingKeyBindingSet.h1.tag:
-      removeTags(headingKeyBindingSet.h1.shortcut, e);
+      hideTags(headingKeyBindingSet.h1.shortcut, e);
       break;
     case headingKeyBindingSet.h2.tag:
-      removeTags(headingKeyBindingSet.h2.shortcut, e);
+      hideTags(headingKeyBindingSet.h2.shortcut, e);
       break;
     case headingKeyBindingSet.h3.tag:
     default:
-      removeTags(headingKeyBindingSet.h3.shortcut, e);
+      hideTags(headingKeyBindingSet.h3.shortcut, e);
       break;
   }
 }
 
-export function onFocus(e) {
-  let tag = e.target.tagName;
-  console.log("onfcous");
-
-  // switch (tag) {
-  //   case headingKeyBindingSet.h1.tag:
-  //     addTags(headingKeyBindingSet.h1.shortcut, e);
-  //     break;
-  //   case headingKeyBindingSet.h2.tag:
-  //     addTags(headingKeyBindingSet.h2.shortcut, e);
-  //     break;
-  //   case headingKeyBindingSet.h3.tag:
-  //     addTags(headingKeyBindingSet.h3.shortcut, e);
-  //     break;
-  //   default:
-  // }
-}
-
-function removeTags(tag, e) {
-  console.log(e.target);
-  if (e.target.firstChild && e.target.firstChild.classList) {
-    e.target.firstChild.classList.remove("show");
-    e.target.firstChild.classList.add("hide");
+function hideTags(node) {
+  console.log("hideTags", node);
+  if (isInlineTag(node)) {
+    node.previousSibling.classList.remove("show");
+    node.previousSibling.classList.add("hide");
+    node.nextSibling.classList.remove("show");
+    node.nextSibling.classList.add("hide");
+  }
+  if (node.firstChild && node.firstChild.classList) {
+    node.firstChild.classList.remove("show");
+    node.firstChild.classList.add("hide");
   }
 }
 
-function addTags(tag, e) {
-  if (e.target.firstChild && e.target.firstChild.classList) {
-    e.target.firstChild.classList.remove("hide");
-    e.target.firstChild.classList.add("show");
+function showTags(node) {
+  if (isInlineTag(node)) {
+    console.log("%cgoing to add tags", "color: blue");
+    node.previousSibling.classList.remove("hide");
+    node.previousSibling.classList.add("show");
+    node.nextSibling.classList.remove("hide");
+    node.nextSibling.classList.add("show");
+  }
+  if (node.firstChild && node.firstChild.classList) {
+    node.firstChild.classList.remove("hide");
+    node.firstChild.classList.add("show");
   }
 }
 
@@ -169,62 +167,49 @@ export function getEditorElement() {
   return document.getElementById("free-style");
 }
 
-// KEY PRESS
-function onKeyPressed(e) {
-  const sel = window.getSelection();
-  const currNode = sel.anchorNode;
-  if (e.keyCode === 13) {
-    e.preventDefault();
-    // console.log("key pressed", e);
-    addNewParagraph();
-  }
-}
-
-export function addNewParagraph() {
+export function addNewParagraph(text) {
   const editorRoot = getEditorElement();
   const newParagraph = document.createElement("p");
 
+  if (text) {
+    newParagraph.innerHTML = text;
+  }
   editorRoot.append(newParagraph);
   let sel = window.getSelection();
   sel.setBaseAndExtent(newParagraph, 0, newParagraph, 0);
   return newParagraph;
 }
 
+// bindings!!
 export function bindingListeners(node) {
   let allListeners = [
     { key: "input", action: onChange },
-    { key: "focus", action: onFocus },
+    { key: "click", action: onMouseClick },
     // {key: 'blur', action: onBlur},
-    { key: "keydown", action: onKeyPressed },
+    { key: "keyup", action: onKeyPressed },
   ];
 
   allListeners.forEach((item) => node.addEventListener(item.key, item.action));
-  // node.addEventListener("input", onChange);
-  // node.addEventListener("focus", onFocus);
-  // // node.addEventListener("blur", onBlur);
-  // node.addEventListener("keydown", onKeyPressed);
 }
 
 function getSectionNodeName(currNode) {
-  if (currNode.tagName === "SPAN") {
+  console.log("getSectionNodeName", currNode);
+  if (currNode && currNode.parentNode && currNode.tagName === "SPAN") {
     return currNode.parentNode.tagName;
   }
   return currNode.tagName;
 }
 
 function getSeclectedMainNode(currNode) {
+  const node = currNode.nodeType === 3 ? node.parentNode : node;
   if (currNode.tagName === "SPAN") {
     return currNode.parentNode;
   }
   return currNode;
 }
 
-function hasLineBreak(text) {
-  return /\n/.test(text);
-}
-
 function setMarkup(tagName, tagConfig, anchorOffset) {
-  debugger;
+  // debugger;
   const currNode = getSelectionNode();
   let content = getSeclectedMainNode(currNode).innerText;
   const lengthOfTag = tagConfig.shortcut.length;
@@ -249,4 +234,342 @@ function setMarkup(tagName, tagConfig, anchorOffset) {
     n.lastChild.firstChild,
     anchorOffset - lengthOfTag
   );
+}
+
+function onMouseClick(e) {
+  const targetNode = e.target;
+  const anchorNode = window.getSelection().anchorNode;
+  const targetText = e.target.innerText;
+  updateActiveNode(anchorNode);
+  // console.log("onMouseClick", e);
+  // console.log(targetNode);
+  // console.log(targetText);
+}
+
+function updateActiveNode(node) {
+  // debugger;
+  lastVisitedNode = currentVisitingNode;
+  currentVisitingNode = node;
+  const currNode = window.getSelection().anchorNode;
+  if (lastVisitedNode && currentVisitingNode != lastVisitedNode) {
+    console.log("-----");
+    console.log(
+      "lastVisitedNode ->",
+      lastVisitedNode,
+      lastVisitedNode.nodeValue
+    );
+    console.log(
+      "currentVisitingNode",
+      currentVisitingNode.nodeType,
+      currentVisitingNode.nodeName,
+      currentVisitingNode.nodeValue
+    );
+    console.log(
+      "%cisSame??? ->",
+      "color: red",
+      lastVisitedNode == currentVisitingNode
+    );
+    console.log(
+      "isInlineTag(currentVisitingNode)",
+      isInlineTag(currentVisitingNode)
+    );
+    console.log("-----");
+  }
+
+  // cusor enter inline tag from left side
+  if (
+    getAnchorOffset() === getAnchorFocusNodeSize() &&
+    currentVisitingNode.parentNode.nextSibling &&
+    !isInlineTag(lastVisitedNode.parentNode) &&
+    isInlineTag(currentVisitingNode.parentNode.nextSibling) &&
+    !hasInlineMarkInText(currentVisitingNode.nodeValue)
+  ) {
+    // console.log(
+    //   "enter from left",
+    //   currentVisitingNode.parentNode.nextSibling.firstChild.nextSibling
+    // );
+
+    showTags(currentVisitingNode.parentNode.nextSibling.firstChild.nextSibling);
+    // do sth add inline tags around
+    if (getSelectionNode(currentVisitingNode).tagName === "B") {
+      addInlineMarkup(
+        "P",
+        "**",
+        currentVisitingNode.parentNode.nextSibling.firstChild.nextSibling
+      );
+    }
+    if (getSelectionNode(currentVisitingNode).tagName === "I") {
+      addInlineMarkup(
+        "P",
+        "_",
+        currentVisitingNode.parentNode.nextSibling.firstChild.nextSibling
+      );
+    }
+  }
+
+  // inside
+
+  if (isInlineTag(getSelectionNode(currentVisitingNode))) {
+    console.log("inside inline tags");
+    // console.log("inside b tag", getSelectionNode(currentVisitingNode));
+    if (getSelectionNode(currentVisitingNode).tagName === "B") {
+      addInlineMarkup("P", "**", currentVisitingNode);
+    }
+    if (getSelectionNode(currentVisitingNode).tagName === "I") {
+      addInlineMarkup("P", "_", currentVisitingNode);
+    }
+  }
+
+  // cusor enter inline tag from right side
+  if (
+    getAnchorOffset() === getAnchorFocusNodeSize() &&
+    isInlineTag(currentVisitingNode)
+  ) {
+    console.log("enter from right");
+    showTags(currentVisitingNode);
+    if (getSelectionNode(currentVisitingNode).tagName === "B") {
+      addInlineMarkup("P", "**", currentVisitingNode);
+    }
+    if (getSelectionNode(currentVisitingNode).tagName === "I") {
+      addInlineMarkup("P", "_", currentVisitingNode);
+    }
+  }
+
+  // TODO: mouse click not works
+  if (isHeadingTag(lastVisitedNode) || isHeadingTag(currentVisitingNode)) {
+    if (
+      lastVisitedNode &&
+      lastVisitedNode != currentVisitingNode &&
+      lastVisitedNode.tagName !== "P"
+    ) {
+      hideTags(lastVisitedNode);
+    }
+
+    if (
+      currentVisitingNode &&
+      lastVisitedNode != currentVisitingNode &&
+      currentVisitingNode.tagName !== "P"
+    ) {
+      showTags(currentVisitingNode);
+    }
+  }
+}
+
+function onKeyPressed(e) {
+  // const currNode = getSelectionNode();
+  const currNode = window.getSelection().anchorNode;
+  console.log("!!!!!!!!! key press -> currentNode", currNode);
+  // let node = getSeclectedMainNode(currNode);
+  // debugger;
+  updateActiveNode(currNode);
+
+  // remove from inline mark when curosr move out to right
+  if (
+    lastVisitedNode &&
+    currentVisitingNode != lastVisitedNode &&
+    !isInlineTag(lastVisitedNode.parentNode) &&
+    !isInlineTag(currentVisitingNode.parentNode) &&
+    lastVisitedNode.parentNode.tagName === "SPAN" &&
+    !hasInlineMarkInText(currentVisitingNode.nodeValue) &&
+    currentVisitingNode.nodeType === 3 &&
+    e.key === "ArrowRight"
+  ) {
+    hideTags(lastVisitedNode.parentNode.previousSibling);
+    console.log("e", e);
+  }
+
+  // remove from inline mark when curosr move out to left
+  if (
+    lastVisitedNode &&
+    isInlineTag(lastVisitedNode.parentNode.nextSibling) &&
+    !isInlineTag(lastVisitedNode.parentNode) &&
+    lastVisitedNode.parentNode.tagName === "SPAN" &&
+    currentVisitingNode.nodeType === 3 &&
+    !hasInlineMarkInText(currentVisitingNode.nodeValue) &&
+    getAnchorOffset() < getAnchorFocusNodeSize() &&
+    e.key === "ArrowLeft"
+  ) {
+    hideTags(lastVisitedNode.parentNode.nextSibling.firstChild.nextSibling);
+    console.log("e", e);
+  }
+
+  // const anchorNode = getSelectionNode();
+  // const sel = window.getSelection();
+  // const position = sel.anchorOffset;
+
+  // if (
+  //   position === anchorNode.innerText.length &&
+  //   anchorNode.nodeName === "SPAN"
+  // ) {
+  //   console.log("%chelp, im blocked", "color: red");
+  //   sel.setBaseAndExtent(anchorNode.nextSibling, 0, anchorNode.nextSibling, 0);
+
+  //   console.log("window.getSelection();", window.getSelection());
+  //   console.log("%coops", "color: red");
+  // }
+}
+
+function isInlineTag(node) {
+  if (!node) {
+    return false;
+  }
+  // debugger;
+  const inlineTags = ["B", "I"];
+
+  if (node.nodeName === "#text") {
+    return inlineTags.includes(node.parentNode.tagName);
+  }
+  return inlineTags.includes(node.tagName);
+}
+
+function isHeadingTag(node) {
+  const inlineTags = ["H1", "H2", "H3", "H4"];
+  return inlineTags.includes(node);
+}
+
+function addInlineMarkup(tagName, symbol, node) {
+  // console.log("inline currNode", currNode);
+
+  const hasMark = /\*\D+\*/.test(node.innerText);
+
+  if (hasMark) {
+    return;
+  }
+  if (hasInlineMarkAround(node)) {
+    return;
+  }
+
+  // console.log("addInlineMarkup node", node);
+  // console.log("addInlineMarkup parent", node.parentNode);
+  const inlineElement = node.nodeName === "#text" ? node.parentNode : node;
+  // debugger;
+
+  const anchorNode = getAnchorFocusNode();
+  const anchorOffset = getAnchorOffset();
+  const sel = window.getSelection();
+  // console.log("anchorNode,", anchorNode);
+
+  const beforeText = inlineElement.previousSibling;
+  const afterText = inlineElement.nextSibling;
+
+  // console.log("addInlineMarkup beforeText", beforeText);
+  // console.log("addInlineMarkup afterText", afterText);
+  const beforeSpan = document.createElement("span");
+  beforeSpan.innerText = beforeText.nodeValue;
+  const afterSpan = document.createElement("span");
+  afterSpan.innerText = afterText.nodeValue;
+
+  const grandpaNode = inlineElement.parentNode;
+  // console.log("addInlineMarkup beforeSpan", beforeSpan);
+  // console.log("addInlineMarkup afterSpan", afterSpan);
+  // console.log("addInlineMarkup grandpaNode", grandpaNode);
+
+  // debugger;
+  grandpaNode.replaceChild(beforeSpan, beforeText);
+  grandpaNode.replaceChild(afterSpan, afterText);
+
+  // debugger;
+  if (anchorNode == beforeText) {
+    sel.setBaseAndExtent(
+      beforeSpan.firstChild,
+      anchorOffset,
+      beforeSpan.firstChild,
+      anchorOffset
+    );
+  }
+
+  const inlineTagLeftNode = document.createElement("span");
+  inlineTagLeftNode.innerText = symbol;
+  const inlineTagRightNode = inlineTagLeftNode.cloneNode(true);
+  let inlineTagNode;
+  if (node.nodeType === 3 && isInlineTag(node)) {
+    inlineTagNode = node.parentNode;
+  }
+  inlineTagNode = node;
+  inlineTagNode.insertBefore(inlineTagRightNode, node.firstChild.nextSibling);
+  inlineTagNode.insertBefore(inlineTagLeftNode, node.firstChild);
+
+  // replace current and lastVisted node
+  if (currentVisitingNode == beforeText) {
+    currentVisitingNode = beforeSpan;
+  }
+  if (currentVisitingNode == afterText) {
+    currentVisitingNode = afterSpan;
+  }
+  if (lastVisitedNode == beforeText) {
+    lastVisitedNode = beforeSpan;
+  }
+  if (lastVisitedNode == afterText) {
+    lastVisitedNode = afterSpan;
+  }
+
+  // inlineTagRightNode.parentNode.nextSibling.textContent =
+  //   " " + inlineTagRightNode.parentNode.nextSibling.nodeValue;
+  // inlineTagLeftNode.parentNode.previousSibling.textContent =
+  //   inlineTagLeftNode.parentNode.previousSibling.nodeValue + " ";
+
+  // let content = getSeclectedMainNode(currNode).innerText;
+  // const lengthOfTag = tagConfig.shortcut.length;
+
+  // currNode.innerText = content.replace(tagConfig.shortcut, "");
+  // console.log("currNode.innerText", currNode.innerText);
+  // console.log("currNode.innerText", content.replace(tagConfig.shortcut, ""));
+
+  // let n = changeTagName(
+  //   getSeclectedMainNode(currNode),
+  //   tagName,
+  //   content.replace(tagConfig.shortcut, "")
+  // );
+
+  // bindingListeners(n);
+
+  // const sel = window.getSelection();
+
+  // sel.setBaseAndExtent(
+  //   n.lastChild.firstChild,
+  //   anchorOffset - lengthOfTag,
+  //   n.lastChild.firstChild,
+  //   anchorOffset - lengthOfTag
+  // );
+}
+
+function hasInlineMarkAround(node) {
+  // console.log("-- hasInlineMarkAround node--", node);
+  // console.log("-- hasInlineMarkAround same?--", node == getAnchorFocusNode());
+
+  const marks = ["*", "**", "_", "__"];
+  if (!node.nextSibling || !node.previousSibling) {
+    return false;
+  }
+
+  // console.log("next sibling", node.nextSibling.nodeType);
+  // console.log("prev sibling", node.previousSibling.nodeType);
+  return (
+    node.nextSibling.nodeType === node.previousSibling.nodeType &&
+    node.nextSibling.innerText === node.previousSibling.innerText &&
+    marks.includes(node.nextSibling.innerText) &&
+    marks.includes(node.previousSibling.innerText)
+  );
+}
+
+function hasInlineMarkInText(text) {
+  const marks = ["*", "**", "_", "__"];
+  return marks.includes(text);
+}
+
+function getAnchorFocusNode() {
+  return window.getSelection().anchorNode;
+}
+
+function getAnchorFocusNodeSize() {
+  const anchorNode = getAnchorFocusNode();
+  if (anchorNode.nodeType === 3) {
+    return anchorNode.length;
+  }
+
+  return anchorNode.innerText.length;
+}
+
+function getAnchorOffset() {
+  return window.getSelection().anchorOffset;
 }

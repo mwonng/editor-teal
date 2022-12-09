@@ -7,5 +7,5 @@ document.getElementById("app").innerHTML = `
 
 let freeStyleArea = document.getElementById("free-style");
 
-addNewParagraph();
+addNewParagraph("aaa bbb ccc ddaabbcc");
 bindingListeners(freeStyleArea)
