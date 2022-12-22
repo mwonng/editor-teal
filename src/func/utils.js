@@ -16,6 +16,58 @@ export function getSeclectedMainNode(currNode) {
   return node;
 }
 
+export function replaceInlineTags(node) {
+  console.log("found inline in Node", node);
+  console.log("anchorOffset", getAnchorOffset());
+  const anchorOffset = getAnchorOffset();
+  const parentNode = node.parentNode;
+
+  const oldInnerText = node.innerText;
+
+  // split by marks
+  const textArr = oldInnerText.split("**");
+  const term = "**" + textArr[1] + "**";
+  const termPos = oldInnerText.indexOf(term);
+  console.log(termPos + term.length);
+  // create before and after marks spans
+  const beforeMarkSpan = createEditableTag("span");
+  beforeMarkSpan.innerText = textArr[0] + " ";
+
+  const afterMarkSpan = createEditableTag("span");
+  afterMarkSpan.innerText = " " + textArr[2];
+
+  // create mark spans
+  const markSpan = createEditableTag("span", "bold");
+  markSpan.innerText = "**";
+
+  // create a inline mark text span(text to be bold/italic)
+  const inlineMarkTextSpan = createEditableTag("span");
+  inlineMarkTextSpan.innerText = textArr[1];
+
+  // create the inline mark wrapper
+  const inlineMark = createEditableTag("b");
+  inlineMark.append(markSpan.cloneNode(true), inlineMarkTextSpan, markSpan);
+
+  // create a new paragraph to replace current node
+  const newNode = document.createElement("P");
+  newNode.append(beforeMarkSpan, inlineMark, afterMarkSpan);
+
+  parentNode.replaceChild(newNode, node);
+
+  if (anchorOffset >= termPos) {
+    console.log("move to after ");
+    const sel = window.getSelection();
+    // debugger;
+    sel.setBaseAndExtent(
+      afterMarkSpan.firstChild,
+      1,
+      afterMarkSpan.firstChild,
+      1
+    );
+  }
+  return newNode;
+}
+
 export function getAnchorFocusNode() {
   return window.getSelection().anchorNode;
 }
@@ -72,6 +124,24 @@ export function showTags(node) {
     node.firstChild.classList.remove("hide");
     node.firstChild.classList.add("show");
   }
+}
+
+export function hideMarkSpan(inlineNode) {
+  inlineNode.firstChild.classList.remove("show");
+  inlineNode.firstChild.classList.add("hide");
+  inlineNode.lastChild.classList.remove("show");
+  inlineNode.lastChild.classList.add("hide");
+  removeSpace(inlineNode);
+}
+
+export function removeSpace(inlineNode) {
+  inlineNode.previousSibling.innerHTML = inlineNode.previousSibling.innerHTML.trim();
+  inlineNode.nextSibling.innerHTML = inlineNode.nextSibling.innerHTML.trim();
+}
+
+export function showMarkSpan(markSpanNode) {
+  markSpanNode.classList.remove("hide");
+  markSpanNode.classList.add("show");
 }
 
 export function hideTags(node) {

@@ -15,6 +15,9 @@ import {
   isHeadingTag,
   isInlineTag,
   showTags,
+  showMarkSpan,
+  hideMarkSpan,
+  replaceInlineTags,
 } from "./utils";
 
 let lastVisitedNode, currentVisitingNode;
@@ -25,22 +28,41 @@ export function onChange(e) {
   const selection = window.getSelection();
   const anchorOffset = window.getSelection().anchorOffset;
 
-  updateActiveNode(getSeclectedMainNode(currNode));
+  const rootEle = document.getElementById("free-style");
+  const editorEle = rootEle.firstChild.innerText;
+
+  // console.log("editorEle", editorEle);
+  console.log("content", content, getMainElementTagName(currNode));
+
+  // capture inline marks
+  if (
+    content.match(/\*{2}(\S+)\*{2}/) &&
+    getMainElementTagName(currNode) === "P" &&
+    e.data === "*"
+  ) {
+    console.log("sel", selection, anchorOffset);
+    const newNode = replaceInlineTags(currNode, anchorOffset);
+    // selection.setBaseAndExtent()
+  }
+
+  //
+
+  // updateActiveNode(getSeclectedMainNode(currNode));
   // console.log("----");
   // console.log(e);
   // console.log("current content", content);
 
-  if (e.inputType == "deleteContentBackward" && content.trim() == "") {
-    currNode.innerText = currNode.innerText.trim();
-    if (currNode.innerText.length > 0) {
-      selection.setBaseAndExtent(
-        currNode.firstChild,
-        currNode.innerText.length,
-        currNode.firstChild,
-        currNode.innerText.length
-      );
-    }
-  }
+  // if (e.inputType == "deleteContentBackward" && content.trim() == "") {
+  //   currNode.innerText = currNode.innerText.trim();
+  //   if (currNode.innerText.length > 0) {
+  //     selection.setBaseAndExtent(
+  //       currNode.firstChild,
+  //       currNode.innerText.length,
+  //       currNode.firstChild,
+  //       currNode.innerText.length
+  //     );
+  //   }
+  // }
   // heading triggers
   if (content.match(/^#\s/) && currNode !== "H1") {
     setMarkup("h1", headingKeyBindingSet.h1, anchorOffset);
@@ -157,8 +179,8 @@ function setMarkup(tagName, tagConfig, anchorOffset) {
   const lengthOfTag = tagConfig.shortcut.length;
 
   currNode.innerText = content.replace(tagConfig.shortcut, "");
-  console.log("currNode.innerText", currNode.innerText);
-  console.log("currNode.innerText", content.replace(tagConfig.shortcut, ""));
+  // console.log("currNode.innerText", currNode.innerText);
+  // console.log("currNode.innerText", content.replace(tagConfig.shortcut, ""));
 
   let n = changeTagName(
     getSeclectedMainNode(currNode),
@@ -180,7 +202,7 @@ function setMarkup(tagName, tagConfig, anchorOffset) {
 
 function onMouseClick(e) {
   const anchorNode = window.getSelection().anchorNode;
-  updateActiveNode(anchorNode);
+  // updateActiveNode(anchorNode);
   // leave from inline bolder
 
   // when mouse click out from a inline element
@@ -202,28 +224,28 @@ function updateActiveNode(node) {
   const currNode = window.getSelection().anchorNode;
 
   if (lastVisitedNode && currentVisitingNode != lastVisitedNode) {
-    console.log("-----");
-    console.log(
-      "lastVisitedNode ->",
-      lastVisitedNode,
-      lastVisitedNode.nodeValue
-    );
-    console.log(
-      "currentVisitingNode",
-      currentVisitingNode.nodeType,
-      currentVisitingNode.nodeName,
-      currentVisitingNode.nodeValue
-    );
-    console.log(
-      "%cisSame??? ->",
-      "color: red",
-      lastVisitedNode == currentVisitingNode
-    );
-    console.log(
-      "isInlineTag(currentVisitingNode)",
-      isInlineTag(currentVisitingNode)
-    );
-    console.log("-----");
+    // console.log("-----");
+    // console.log(
+    //   "lastVisitedNode ->",
+    //   lastVisitedNode,
+    //   lastVisitedNode.nodeValue
+    // );
+    // console.log(
+    //   "currentVisitingNode",
+    //   currentVisitingNode.nodeType,
+    //   currentVisitingNode.nodeName,
+    //   currentVisitingNode.nodeValue
+    // );
+    // console.log(
+    //   "%cisSame??? ->",
+    //   "color: red",
+    //   lastVisitedNode == currentVisitingNode
+    // );
+    // console.log(
+    //   "isInlineTag(currentVisitingNode)",
+    //   isInlineTag(currentVisitingNode)
+    // );
+    // console.log("-----");
   }
 
   // cusor enter inline tag from left side
@@ -261,10 +283,10 @@ function updateActiveNode(node) {
 
   if (isInlineTag(getSelectionNode(currentVisitingNode))) {
     const mainNode = getSeclectedMainNode(currentVisitingNode);
-    console.log(
-      "inside inline tags",
-      getSeclectedMainNode(currentVisitingNode)
-    );
+    // console.log(
+    //   "inside inline tags",
+    //   getSeclectedMainNode(currentVisitingNode)
+    // );
     const hasBoldMark = /\*\*\D+\*\*/.test(mainNode.innerText);
     const hasItalicMark = /\_\D+\_/.test(mainNode.innerText);
 
@@ -315,11 +337,37 @@ function updateActiveNode(node) {
 }
 
 function onKeyPressed(e) {
+  // debug
+  // console.log(e);
+  //
   // const currNode = getSelectionNode();
   const currNode = window.getSelection().anchorNode;
+  const anchorOffset = getAnchorOffset();
   // let node = getSeclectedMainNode(currNode);
   // debugger;
-  updateActiveNode(currNode);
+  // updateActiveNode(currNode);
+
+  // this condition for cursor move out of bold to right side
+  if (
+    anchorOffset > 1 &&
+    getSelectionNode().tagName === "SPAN" &&
+    getSelectionNode().previousSibling.tagName === "B"
+  ) {
+    const anchorOffsetHiding = getAnchorOffset();
+
+    hideMarkSpan(getSelectionNode().previousSibling);
+
+    // currSel.textContent = currNode.textContent.trim();
+    const currSel = window.getSelection().anchorNode;
+    let sel = window.getSelection();
+    debugger;
+    sel.setBaseAndExtent(
+      currSel.firstChild,
+      anchorOffsetHiding - 1,
+      currSel.firstChild,
+      anchorOffsetHiding - 1
+    );
+  }
 
   // remove from inline mark when curosr move out to right
   if (
@@ -333,7 +381,6 @@ function onKeyPressed(e) {
     e.key === "ArrowRight"
   ) {
     hideTags(lastVisitedNode.parentNode.previousSibling);
-    console.log("e", e);
   }
 
   // remove from inline mark when curosr move out to left
