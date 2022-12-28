@@ -18,6 +18,7 @@ import {
   showMarkSpan,
   hideMarkSpan,
   replaceInlineTags,
+  strToHtml,
 } from "./utils";
 
 let lastVisitedNode, currentVisitingNode;
@@ -33,7 +34,7 @@ export function onChange(e) {
 
   // console.log("editorEle", editorEle);
   console.log("content", content, getMainElementTagName(currNode));
-
+  isPrevPosNbsp();
   // capture inline marks
   if (
     content.match(/\*{2}(\S+)\*{2}/) &&
@@ -348,26 +349,27 @@ function onKeyPressed(e) {
   // updateActiveNode(currNode);
 
   // this condition for cursor move out of bold to right side
-  if (
-    anchorOffset > 1 &&
-    getSelectionNode().tagName === "SPAN" &&
-    getSelectionNode().previousSibling.tagName === "B"
-  ) {
-    const anchorOffsetHiding = getAnchorOffset();
+  // TODO need to fix
+  // if (
+  //   anchorOffset === 1 &&
+  //   getSelectionNode().tagName === "SPAN" &&
+  //   getSelectionNode().previousSibling.tagName === "B"
+  // ) {
+  //   const anchorOffsetHiding = getAnchorOffset();
 
-    hideMarkSpan(getSelectionNode().previousSibling);
+  //   hideMarkSpan(getSelectionNode().previousSibling);
 
-    // currSel.textContent = currNode.textContent.trim();
-    const currSel = window.getSelection().anchorNode;
-    let sel = window.getSelection();
-    debugger;
-    sel.setBaseAndExtent(
-      currSel.firstChild,
-      anchorOffsetHiding - 1,
-      currSel.firstChild,
-      anchorOffsetHiding - 1
-    );
-  }
+  //   // currSel.textContent = currNode.textContent.trim();
+  //   const currSel = window.getSelection().anchorNode;
+  //   let sel = window.getSelection();
+  //   debugger;
+  //   sel.setBaseAndExtent(
+  //     currSel.firstChild,
+  //     anchorOffsetHiding - 1,
+  //     currSel.firstChild,
+  //     anchorOffsetHiding - 1
+  //   );
+  // }
 
   // remove from inline mark when curosr move out to right
   if (
@@ -519,4 +521,23 @@ function addInlineMarkup(tagName, symbol, node) {
   //   n.lastChild.firstChild,
   //   anchorOffset - lengthOfTag
   // );
+}
+
+function isPrevPosNbsp() {
+  const currPos = getAnchorOffset();
+  const currText = getSelectionNode().innerText;
+  const prevCharacter = currText[currPos - 1];
+
+  if (prevCharacter == "*") {
+    console.log("isPrevPosNbsp -> true");
+    const anchorNode = getSelectionNode();
+    console.log("anchorNode", anchorNode);
+    const sel = window.getSelection();
+    const nextNode = anchorNode.nextSibling;
+    console.log("nextNode", nextNode);
+    // sel.setBaseAndExtent(nextNode.firstChild, 0, nextNode.firstChild, 1);
+    return true;
+  }
+
+  console.log("isPrevPosNbsp", currText, currPos, prevCharacter);
 }

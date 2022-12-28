@@ -36,12 +36,12 @@ export function replaceInlineTags(node) {
   const afterMarkSpan = createEditableTag("span");
   afterMarkSpan.innerText = " " + textArr[2];
 
-  // create mark spans
+  // create mark spans TODO: going to be remove
   const markSpan = createEditableTag("span", "bold");
   markSpan.innerText = "**";
 
   // create a inline mark text span(text to be bold/italic)
-  const inlineMarkTextSpan = createEditableTag("span");
+  const inlineMarkTextSpan = createEditableTag("span", "inline-bold-marked");
   inlineMarkTextSpan.innerText = textArr[1];
 
   // create the inline mark wrapper
@@ -203,4 +203,10 @@ export function hasInlineMarkAround(node) {
     marks.includes(node.nextSibling.innerText) &&
     marks.includes(node.previousSibling.innerText)
   );
+}
+
+export function strToHtml(htmlString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  return doc.body.firstChild;
 }
