@@ -1,4 +1,5 @@
 import { headingKeyBindingSet } from "./const";
+import { onInput } from "./newSolution";
 import {
   addNewParagraph,
   createEditableTag,
@@ -164,7 +165,7 @@ export function onBlur(e) {
 // bindings!!
 export function bindingListeners(node) {
   let allListeners = [
-    { key: "input", action: onChange },
+    { key: "input", action: onInput },
     { key: "click", action: onMouseClick },
     // {key: 'blur', action: onBlur},
     { key: "keyup", action: onKeyPressed },
