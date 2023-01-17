@@ -1,3 +1,12 @@
+import {
+  createBoldElementWithMarkSpan,
+  createMarkSpan,
+  currentCursorNode,
+  isCursorInside,
+  getElementNode,
+  getBoldText,
+} from "./eventHelpers";
+
 export const onInput = (e) => {
   console.log("onInput call ---");
   console.log(e);
@@ -7,7 +16,10 @@ export const onInput = (e) => {
     const anchorText = currentCursorNode();
     console.log(anchorText);
     const allText = isTextHadBoldMark(anchorText.wholeText);
-    console.log(allText, getBoldText(allText.m));
+
+    //this console.log the marked text
+    // console.log(allText, getBoldText(allText.m));
+    replaceTextAndAddMarkElements(anchorText.parentNode, allText);
   }
 
   if (e.inputType === "deleteContentBackward") {
@@ -28,47 +40,29 @@ export const onInput = (e) => {
   return;
 };
 
-export const createBoldElementWithMarkSpan = (text) => {
-  const boldElement = document.createElement("b");
-  boldElement.innerText = text;
-
-  return [createMarkSpan("**"), boldElement, createMarkSpan("**")];
-};
-
-export const createMarkSpan = (mark) => {
-  let span = document.createElement("span");
-  span.innerText = mark;
-
-  return span;
-};
-
-export const currentCursorNode = () => {
-  return window.getSelection().anchorNode;
-};
-
-export const isCursorInside = () => {
-  const cursorAnchorNode = window.getSelection().anchorNode;
-  return;
-};
-
-export function getElementNode() {
-  // this function call will return parent node if current selection is text node
-  const node = document.getSelection().anchorNode;
-  return node.nodeType === 3 ? node.parentNode : node;
-}
+/**
+ *
+ * @param {string} text
+ * @returns {boolean | object}
+ * it will return false if not captured a marked text
+ * otherwise, it will return a capture array
+ * example: {p: "textBefore", m: "markedText", n: "textAfter"}
+ * if text had bold mark return 3 parts of the text:
+ * groups
+ * p: previous text before bold mark
+ * m: text with bold mark
+ * n: next text after bold mark
+ */
 
 export function isTextHadBoldMark(text) {
-  // if text had bold mark return 3 parts of the text:
-  // groups
-  // p: previous text before bold mark
-  // m: text with bold mark
-  // n: next text after bold mark
   const regexp = /(?<p>.+)(?<m>\s\*\*.+\*\*\s)(?<n>.+)/g;
   const arr = [...text.matchAll(regexp)];
 
   if (!arr[0]) {
     return false;
   }
+
+  console.log("show captured regex", arr);
 
   const textToBeBold = arr[0].groups.m.slice(3, -3);
 
@@ -77,6 +71,35 @@ export function isTextHadBoldMark(text) {
   return arr[0].groups;
 }
 
-export function getBoldText(textWithMark) {
-  return textWithMark.slice(3, -3);
+/**
+ *
+ * @param {object} makredTextWithSiblings, it including, p, m, n as keys to present the wholeText
+ * @returns
+ */
+export function replaceTextAndAddMarkElements(
+  parentNode,
+  makredTextWithSiblings
+) {
+  if (makredTextWithSiblings) {
+    const boldText = getBoldText(makredTextWithSiblings.m);
+    console.log("parent ele", parentNode.las);
+    console.log("replacing function", makredTextWithSiblings);
+    const markSpan = createMarkSpan("**").outerHTML;
+    parentNode.innerHTML =
+      makredTextWithSiblings.p +
+      " " +
+      markSpan +
+      "<b>" +
+      boldText +
+      "</b>" +
+      markSpan +
+      " " +
+      makredTextWithSiblings.n;
+    const sel = window.getSelection();
+    sel.setBaseAndExtent(parentNode.lastChild, 1, parentNode.lastChild, 1);
+  }
+  return false;
 }
+
+//TODO:  GOAL: create a feature if user type ' **text** ', it will replace with styled e.g. ** go to bold and also keep marks span around
+// NOTE: have to had SPACE before and after **
