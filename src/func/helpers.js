@@ -1,5 +1,10 @@
 import { headingKeyBindingSet } from "./const";
-import { onInput } from "./newSolution";
+import {
+  onInput,
+  isCursorCurrentNodeName,
+  showPrevAndNextSiblingSpan,
+  hideSiblingSpan,
+} from "./newSolution";
 import {
   addNewParagraph,
   createEditableTag,
@@ -204,19 +209,26 @@ function setMarkup(tagName, tagConfig, anchorOffset) {
 
 function onMouseClick(e) {
   const anchorNode = window.getSelection().anchorNode;
-  // updateActiveNode(anchorNode);
-  // leave from inline bolder
 
-  // when mouse click out from a inline element
-
-  if (lastVisitedNode && isInlineTag(getSeclectedMainNode(lastVisitedNode))) {
-    hideTags(lastVisitedNode);
+  if (isCursorCurrentNodeName() === "B") {
+    showPrevAndNextSiblingSpan();
   }
-
-  // when mouse click into a inline element
-  if (isInlineTag(getSeclectedMainNode(anchorNode))) {
-    showTags(anchorNode);
+  if (isCursorCurrentNodeName() === "P") {
+    hideSiblingSpan();
   }
+  // // updateActiveNode(anchorNode);
+  // // leave from inline bolder
+
+  // // when mouse click out from a inline element
+
+  // if (lastVisitedNode && isInlineTag(getSeclectedMainNode(lastVisitedNode))) {
+  //   hideTags(lastVisitedNode);
+  // }
+
+  // // when mouse click into a inline element
+  // if (isInlineTag(getSeclectedMainNode(anchorNode))) {
+  //   showTags(anchorNode);
+  // }
 }
 
 function updateActiveNode(node) {
