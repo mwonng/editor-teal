@@ -7,12 +7,17 @@ import {
   getBoldText,
 } from "./eventHelpers";
 
+let cursorAtLastParaNode, cursorAtCurrentParaNode;
+
+export function getCurrentParaNode() {
+  let currentNode = window.getSelection().anchorNode;
+  while (currentNode.nodeName !== "P") {
+    currentNode = currentNode.parentNode;
+  }
+  return currentNode;
+}
+
 export const onInput = (e) => {
-  console.log("onInput call ---");
-  console.log(e);
-
-  console.log("isCursorCurrentNodeName", isCursorCurrentNodeName());
-
   if (e.data === " ") {
     console.log("capture SPACE");
     const anchorText = currentCursorNode();
@@ -23,26 +28,17 @@ export const onInput = (e) => {
     // if there is bold mark in anchorNode, starting replacing and add the style
     if (allText) {
       const parentNode = anchorText.parentNode;
-      replaceTextAndAddMarkElements(parentNode, allText);
+      console.log("---", window.getSelection().anchorOffset);
+      replaceTextAndAddMarkElements(parentNode, anchorText, allText);
       setCursorPos(parentNode, anchorOffset, allText);
     }
   }
 
-  if (e.inputType === "deleteContentBackward") {
-    console.log("capture BACKSPACE, input are", currentCursorNode());
-  }
+  if (getElementNode())
+    if (e.inputType === "deleteContentBackward") {
+      console.log("capture BACKSPACE, input are", currentCursorNode());
+    }
 
-  if (e.data === ".") {
-    console.log(currentCursorNode());
-    const currentTagNode = currentCursorNode().parentNode.append(
-      ...createBoldElementWithMarkSpan("BOLD")
-    );
-  }
-
-  if (e.data === ",") {
-    const textNode = document.createTextNode(" text");
-    currentCursorNode().parentNode.append(textNode);
-  }
   return;
 };
 
@@ -61,9 +57,9 @@ export const onInput = (e) => {
  */
 
 export function isTextHadBoldMark(text) {
-  const regexp = /(?<p>.+)(?<m>\s\*\*.+\*\*\s)(?<n>.+)/g;
+  const regexp = /(?<p>.+)(?<m>\s\*\*.+\*\*\s)(?<n>.*)/g;
   const arr = [...text.matchAll(regexp)];
-
+  console.log("arr------", arr);
   if (!arr[0]) {
     return false;
   }
@@ -84,6 +80,7 @@ export function isTextHadBoldMark(text) {
  */
 export function replaceTextAndAddMarkElements(
   parentNode,
+  oldChildNode,
   makredTextWithSiblings
 ) {
   if (makredTextWithSiblings) {
@@ -91,21 +88,29 @@ export function replaceTextAndAddMarkElements(
     console.log("parent ele", parentNode);
     console.log("replacing function", makredTextWithSiblings);
 
-    const markSpan = createMarkSpan("**");
-    markSpan.className = "bold show";
-    const markSpanHTML = markSpan.outerHTML;
+    const markSpanLeft = createMarkSpan("**");
+    markSpanLeft.className = "bold show";
+    const markSpanRight = markSpanLeft.cloneNode(true);
 
     const boldNode = document.createElement("B");
     boldNode.innerText = boldText;
-    const boldNodeHTML = boldNode.outerHTML;
-    parentNode.innerHTML =
-      makredTextWithSiblings.p +
-      " " +
-      markSpanHTML +
-      boldNodeHTML +
-      markSpanHTML +
-      " " +
-      makredTextWithSiblings.n;
+    var nodesFragment = document.createDocumentFragment();
+    const prevTextNode = document.createTextNode(
+      makredTextWithSiblings.p + " "
+    );
+    const nextTextNode = makredTextWithSiblings.n
+      ? document.createTextNode(" " + makredTextWithSiblings.n)
+      : document.createTextNode("\u00A0");
+
+    nodesFragment.append(
+      prevTextNode,
+      markSpanLeft,
+      boldNode,
+      markSpanRight,
+      nextTextNode
+    );
+
+    parentNode.replaceChild(nodesFragment, oldChildNode);
   }
   return false;
 }
@@ -130,10 +135,8 @@ export function setCursorPos(parentNode, offset, matchedText) {
   }
 }
 
-export function isCursorCurrentNodeName(anchorNode) {
+export function getCurrentCursorNodeName(anchorNode) {
   const node = getElementNode();
-  console.log("isCursorInsideInlineStyle", node.nodeName);
-
   return node.nodeName;
 }
 
@@ -143,8 +146,8 @@ export function showPrevAndNextSiblingSpan() {
   currentAnchorNode.nextSibling.classList.add("show");
 }
 
-export function hideSiblingSpan() {
-  const currentAnchorNode = getElementNode();
+export function hideSiblingSpan(node) {
+  const currentAnchorNode = node ? node : getElementNode();
   currentAnchorNode.childNodes.forEach((child) => {
     if (child.nodeName === "SPAN") {
       child.classList.remove("show");
@@ -152,5 +155,38 @@ export function hideSiblingSpan() {
     }
   });
 }
+
+export function isParaChange() {
+  return cursorAtCurrentParaNode != cursorAtLastParaNode;
+}
+
+export function setAndUpdateCursorNodeState() {
+  console.log("preseed");
+  const anchorNode = getElementNode();
+  const currentCursorNode =
+    anchorNode.nodeName !== "P" ? anchorNode.parentNode : anchorNode;
+  cursorAtLastParaNode = cursorAtCurrentParaNode;
+  cursorAtCurrentParaNode = currentCursorNode;
+}
+
+export function getCursorState() {
+  return {
+    current: cursorAtCurrentParaNode,
+    last: cursorAtLastParaNode,
+  };
+}
+
+export function updateInlineStyleState() {
+  if (getCurrentCursorNodeName() === "B") {
+    showPrevAndNextSiblingSpan();
+  }
+
+  if (getCurrentCursorNodeName() === "P" || isParaChange()) {
+    const lastPositioNode = getCursorState().last;
+    hideSiblingSpan(lastPositioNode);
+  }
+}
+
 //TODO:  GOAL: create a feature if user type ' **text** ', it will replace with styled e.g. ** go to bold and also keep marks span around
 // NOTE: have to had SPACE before and after **
+// if no letter's after still have issue
