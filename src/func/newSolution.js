@@ -59,12 +59,9 @@ export const onInput = (e) => {
 export function isTextHadBoldMark(text) {
   const regexp = /(?<p>.+)(?<m>\s\*\*.+\*\*\s)(?<n>.*)/g;
   const arr = [...text.matchAll(regexp)];
-  console.log("arr------", arr);
   if (!arr[0]) {
     return false;
   }
-
-  console.log("show captured regex", arr);
 
   const textToBeBold = arr[0].groups.m.slice(3, -3);
 
@@ -94,7 +91,7 @@ export function replaceTextAndAddMarkElements(
 
     const boldNode = document.createElement("B");
     boldNode.innerText = boldText;
-    var nodesFragment = document.createDocumentFragment();
+    const nodesFragment = document.createDocumentFragment();
     const prevTextNode = document.createTextNode(
       makredTextWithSiblings.p + " "
     );
