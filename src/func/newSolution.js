@@ -18,6 +18,11 @@ export function getCurrentParaNode() {
 }
 
 export const onInput = (e) => {
+  if (e.data === "*") {
+    // const sel = window.getSelection();
+    // sliceInlineMarks(sel.anchorNode, sel.anchorOffset);
+    appendTextNode();
+  }
   if (e.data === " ") {
     console.log("capture SPACE");
     const anchorText = currentCursorNode();
@@ -158,7 +163,7 @@ export function isParaChange() {
 }
 
 export function setAndUpdateCursorNodeState() {
-  console.log("preseed");
+  console.log("update State call");
   const anchorNode = getElementNode();
   const currentCursorNode =
     anchorNode.nodeName !== "P" ? anchorNode.parentNode : anchorNode;
@@ -182,6 +187,29 @@ export function updateInlineStyleState() {
     const lastPositioNode = getCursorState().last;
     hideSiblingSpan(lastPositioNode);
   }
+}
+
+export function sliceInlineMarks(anchorNode, anchorOffset) {
+  console.log("anchorOffSet", anchorOffset);
+  anchorNode.splitText(anchorOffset);
+  return;
+}
+
+export function appendTextNode() {
+  console.log("appendTextNode");
+  const anchorOffset = window.getSelection().anchorOffset;
+  const anchorNode = window.getSelection().anchorNode;
+  let nextTextNode = anchorNode.nextSibling;
+
+  while (nextTextNode && nextTextNode.nodeType === 3) {
+    const nodeToRemove = nextTextNode;
+    anchorNode.textContent += nextTextNode.textContent;
+    nextTextNode = nextTextNode.nextSibling;
+    nodeToRemove.remove();
+  }
+
+  const sel = window.getSelection();
+  sel.setBaseAndExtent(anchorNode, anchorOffset, anchorNode, anchorOffset);
 }
 
 //TODO:  GOAL: create a feature if user type ' **text** ', it will replace with styled e.g. ** go to bold and also keep marks span around

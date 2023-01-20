@@ -4,6 +4,7 @@ import {
   onSelectionChange,
   setAndUpdateCursorNodeState,
   updateInlineStyleState,
+  appendTextNode,
 } from "./newSolution";
 
 import {
@@ -105,6 +106,7 @@ function setMarkup(tagName, tagConfig, anchorOffset) {
 function onMouseClick(e) {
   setAndUpdateCursorNodeState();
   updateInlineStyleState();
+  // appendTextNode();
 }
 
 function onKeyPressed(e) {
