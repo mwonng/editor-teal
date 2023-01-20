@@ -39,10 +39,9 @@ export const onInput = (e) => {
     }
   }
 
-  if (getElementNode())
-    if (e.inputType === "deleteContentBackward") {
-      console.log("capture BACKSPACE, input are", currentCursorNode());
-    }
+  if (e.inputType === "deleteContentBackward") {
+    console.log("capture BACKSPACE, input are", currentCursorNode());
+  }
 
   return;
 };
