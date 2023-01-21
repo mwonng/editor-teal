@@ -33,6 +33,6 @@ export function getBoldText(textWithMark) {
   if (!textWithMark) {
     console.log("no mark text captured");
   } else {
-    return textWithMark.slice(3, -3);
+    return textWithMark.slice(2, -2);
   }
 }
