@@ -277,6 +277,7 @@ export function updateInlineStyleState() {
     return;
   }
 
+  // if cursor in a bold node
   if (getCurrentCursorNodeName() === "B") {
     const boldElement = getElementNode();
     if (boldElement.previousSibling.nodeName !== "SPAN") {
@@ -315,6 +316,11 @@ export function updateInlineStyleState() {
       anchorOffSet === 0
     ) {
       showPrevAndNextSiblingSpan(anchorNode.previousSibling.previousSibling);
+    }
+
+    if (isParaChange()) {
+      const lastPositioNode = getCursorState().last;
+      hideSiblingSpan(lastPositioNode);
     }
     return;
   }
