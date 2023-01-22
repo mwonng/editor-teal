@@ -31,7 +31,7 @@ export function shieldInlineElement() {
 export const onInput = (e) => {
   const anchorNode = window.getSelection().anchorNode;
   const anchorOffSet = window.getSelection().anchorOffset;
-  const anchorElement = getElementNode();
+  let anchorElement = getElementNode();
 
   console.log("---- on input", anchorOffSet, anchorElement.previousSibling);
   // input on index 0, but char will go previous element
@@ -56,7 +56,10 @@ export const onInput = (e) => {
     console.log("html position bug");
   }
 
-  if (anchorElement.nodeName === "SPAN" && anchorOffSet === anchorNode.length) {
+  if (
+    getElementNode().nodeName === "SPAN" &&
+    anchorOffSet === anchorNode.length
+  ) {
     console.log("edge condition", anchorNode.textContent);
     const range = document.createRange();
     range.selectNode(anchorElement.nextSibling);
@@ -270,6 +273,7 @@ export function updateInlineStyleState() {
   // this show marks span if you just behind the bold
   if (
     anchorNode.nextSibling &&
+    anchorNode.nextSibling.className &&
     anchorNode.nextSibling.className.indexOf("bold") >= 0 &&
     anchorOffSet === anchorNode.textContent.length
   ) {
@@ -343,7 +347,7 @@ export function sliceInlineMarks(anchorNode, anchorOffset) {
 export function appendTextNode(textNode) {
   console.log("appendTextNode");
   const anchorOffset = window.getSelection().anchorOffset;
-  const anchorNode = textNode ? node : window.getSelection().anchorNode;
+  const anchorNode = textNode ? textNode : window.getSelection().anchorNode;
   let nextTextNode = anchorNode.nextSibling;
 
   while (nextTextNode && nextTextNode.nodeType === 3) {
