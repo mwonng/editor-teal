@@ -9,6 +9,30 @@ import {
 
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 
+export function handleInputInBoldBeforeFirstChar(e) {
+  //TODO: if delete the first input it will go NULL?
+  // debugger;
+  console.log(e);
+  const anchorElement = getElementNode();
+  const input = e.data;
+  if (input) {
+    // if not input, eg. backspace wont have issue
+    const nextTextNode =
+      anchorElement.nextSibling.nodeType === 3
+        ? anchorElement.nextSibling
+        : anchorElement.nextSibling.firstChild;
+    let range = document.createRange();
+    let inputText = document.createTextNode(input);
+    range.selectNode(nextTextNode);
+    range.insertNode(inputText);
+    anchorElement.innerText = "**";
+    const sel = window.getSelection();
+    sel.setBaseAndExtent(inputText, 1, inputText, 1);
+    appendTextNode(inputText);
+  }
+  console.log("html position bug");
+}
+
 export function getCurrentParaNode() {
   let currentNode = window.getSelection().anchorNode;
   while (currentNode.nodeName !== "P") {
