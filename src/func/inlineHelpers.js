@@ -9,6 +9,79 @@ import {
 
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 
+/**
+ * This function will set new curosr/Caret position to new node by the old node offset
+ * @param {node} nodeFragments, when window.getSelection() catch a textNode on current cursor and going to be change to a inline style, this is the new Node which has inline sytled applied.
+ * @param {number} offset, the offset before the inline style change
+ * @result {void | false}
+ */
+export function setCaretOffset(nodeFragments, offset) {
+  let restOffset = offset;
+  if (nodeFragments.childElementCount < 1) {
+    return false;
+  }
+  let currentFragment = nodeFragments.children.item(0);
+
+  while (currentFragment && restOffset > nodeSize(currentFragment)) {
+    currentFragment = currentFragment.nextSibling;
+    restOffset = offset - nodeSize(currentFragment);
+    if (!isTextNode(currentFragment)) {
+      restOffset = restOffset - 2; // element with tag has two more position
+    }
+  }
+  setNodeOffset(currentFragment);
+  return true;
+}
+
+function nodeSize(node) {
+  if (node.nodeType === 3) {
+    return node.textContent.length;
+  }
+  return node.innerText.length;
+}
+
+function setNodeOffset(node, offset) {
+  let currNode = node;
+  while (currNode && currNode.nodeType !== 3) {
+    currNode = currNode.firstChild;
+  }
+
+  const sel = window.getSelection();
+  sel.setBaseAndExtent(currentNode, offset, currNode, offset);
+}
+
+function isTextNode(node) {
+  return node.nodeType === 3;
+}
+
+/**
+ *
+ * @param {string} text
+ * @returns {boolean | object}
+ * it will return false if not captured a marked text
+ * otherwise, it will return a capture array
+ * example: {p: "textBefore", m: "markedText", n: "textAfter"}
+ * if text had bold mark return 3 parts of the text:
+ * groups
+ * p: previous text before bold mark
+ * m: text with bold mark
+ * n: next text after bold mark
+ */
+
+export function isTextHadBoldMark(text) {
+  const regexp = /(?<p>.*)(?<m>\*\*.+\*\*)(?<n>.*)/g;
+  const arr = [...text.matchAll(regexp)];
+  if (!arr[0]) {
+    return false;
+  }
+
+  const textToBeBold = arr[0].groups.m.slice(3, -3);
+
+  console.log("isTextHadBold", arr[0].groups);
+  console.log("text =>", textToBeBold, textToBeBold.length);
+  return arr[0].groups;
+}
+
 export function handleInputInBoldBeforeFirstChar(e) {
   //TODO: if delete the first input it will go NULL?
   // debugger;
@@ -147,34 +220,6 @@ export function boldInlineCapture() {
     setCursorPos(parentNode, anchorOffset, allText);
   }
   return;
-}
-
-/**
- *
- * @param {string} text
- * @returns {boolean | object}
- * it will return false if not captured a marked text
- * otherwise, it will return a capture array
- * example: {p: "textBefore", m: "markedText", n: "textAfter"}
- * if text had bold mark return 3 parts of the text:
- * groups
- * p: previous text before bold mark
- * m: text with bold mark
- * n: next text after bold mark
- */
-
-export function isTextHadBoldMark(text) {
-  const regexp = /(?<p>.+)(?<m>\*\*.+\*\*)(?<n>.*)/g;
-  const arr = [...text.matchAll(regexp)];
-  if (!arr[0]) {
-    return false;
-  }
-
-  const textToBeBold = arr[0].groups.m.slice(3, -3);
-
-  console.log("isTextHadBold", arr[0].groups);
-  console.log("text =>", textToBeBold, textToBeBold.length);
-  return arr[0].groups;
 }
 
 /**
@@ -384,7 +429,3 @@ export function appendTextNode(textNode) {
   const sel = window.getSelection();
   sel.setBaseAndExtent(anchorNode, anchorOffset, anchorNode, anchorOffset);
 }
-
-//TODO:  GOAL: create a feature if user type ' **text** ', it will replace with styled e.g. ** go to bold and also keep marks span around
-// NOTE: have to had SPACE before and after **
-// if no letter's after still have issue

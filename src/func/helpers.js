@@ -5,6 +5,7 @@ import {
   appendTextNode,
   boldInlineCapture,
   handleInputInBoldBeforeFirstChar,
+  isTextHadBoldMark,
 } from "./inlineHelpers";
 import { currentCursorNode, getElementNode } from "./eventHelpers";
 
