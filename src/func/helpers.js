@@ -60,26 +60,8 @@ function onInput(e) {
     }
   }
   if (e.data === "*") {
-    // const sel = window.getSelection();
-    // sliceInlineMarks(sel.anchorNode, sel.anchorOffset);
     appendTextNode();
     boldInlineCapture();
-  }
-  if (e.data === " ") {
-    console.log("capture SPACE");
-    const anchorText = currentCursorNode();
-    const anchorOffset = window.getSelection().anchorOffset;
-    console.log(anchorText);
-    const allText = isTextHadBoldMark(anchorText.wholeText);
-
-    // if there is bold mark in anchorNode, starting replacing and add the style
-    if (allText) {
-      const parentNode = anchorText.parentNode;
-      console.log("---", window.getSelection().anchorOffset);
-      debugger;
-      replaceTextAndAddMarkElements(parentNode, anchorText, allText);
-      setCursorPos(parentNode, anchorOffset, allText);
-    }
   }
 
   if (e.inputType === "deleteContentBackward") {

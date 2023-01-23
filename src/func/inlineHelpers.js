@@ -1,8 +1,6 @@
 import {
-  createBoldElementWithMarkSpan,
   createMarkSpan,
   currentCursorNode,
-  isCursorInside,
   getElementNode,
   getBoldText,
 } from "./eventHelpers";
@@ -13,23 +11,18 @@ let cursorAtLastParaNode, cursorAtCurrentParaNode;
  * This function will set new curosr/Caret position to new node by the old node offset
  * @param {node} nodeFragments, when window.getSelection() catch a textNode on current cursor and going to be change to a inline style, this is the new Node which has inline sytled applied.
  * @param {number} offset, the offset before the inline style change
- * @result {void | false}
+ * @returns {void | false}
  */
-export function setCaretOffset(nodeFragments, offset) {
+export function setCaretOffset(firstNode, offset) {
   let restOffset = offset;
-  if (nodeFragments.childElementCount < 1) {
-    return false;
-  }
-  let currentFragment = nodeFragments.children.item(0);
+  let currentFragment = firstNode;
 
   while (currentFragment && restOffset > nodeSize(currentFragment)) {
+    restOffset = restOffset - nodeSize(currentFragment);
     currentFragment = currentFragment.nextSibling;
-    restOffset = offset - nodeSize(currentFragment);
-    if (!isTextNode(currentFragment)) {
-      restOffset = restOffset - 2; // element with tag has two more position
-    }
   }
-  setNodeOffset(currentFragment);
+
+  setNodeOffset(currentFragment, restOffset);
   return true;
 }
 
@@ -47,16 +40,12 @@ function setNodeOffset(node, offset) {
   }
 
   const sel = window.getSelection();
-  sel.setBaseAndExtent(currentNode, offset, currNode, offset);
-}
-
-function isTextNode(node) {
-  return node.nodeType === 3;
+  sel.setBaseAndExtent(currNode, offset, currNode, offset);
 }
 
 /**
- *
- * @param {string} text
+ * test if text has matched bold marks in the text
+ * @param {string} text full text from the node to be text regex, usually textContent from textNode
  * @returns {boolean | object}
  * it will return false if not captured a marked text
  * otherwise, it will return a capture array
@@ -125,107 +114,34 @@ export function shieldInlineElement() {
   return;
 }
 
-export const onInput = (e) => {
-  const anchorNode = window.getSelection().anchorNode;
-  const anchorOffSet = window.getSelection().anchorOffset;
-  let anchorElement = getElementNode();
-
-  console.log("---- on input", anchorOffSet, anchorElement.previousSibling);
-  // input on index 0, but char will go previous element
-  // this also can be in updateCursorStatu function to manually move to next text node
-  if (
-    anchorElement.className.indexOf("bold") >= 0 &&
-    anchorOffSet === anchorElement.innerText.length
-  ) {
-    const input = e.data;
-    const nextTextNode =
-      anchorElement.nextSibling.nodeType === 3
-        ? anchorElement.nextSibling
-        : anchorElement.nextSibling.firstChild;
-    let range = document.createRange();
-    let inputText = document.createTextNode(input);
-    range.selectNode(nextTextNode);
-    range.insertNode(inputText);
-    anchorElement.innerText = "**";
-    const sel = window.getSelection();
-    sel.setBaseAndExtent(inputText, 1, inputText, 1);
-    appendTextNode(inputText);
-    console.log("html position bug");
-  }
-
-  if (
-    getElementNode().nodeName === "SPAN" &&
-    anchorOffSet === anchorNode.length
-  ) {
-    console.log("edge condition", anchorNode.textContent);
-    const range = document.createRange();
-    range.selectNode(anchorElement.nextSibling);
-    let newInput = document.createTextNode(e.data);
-    anchorNode.textContent = "**";
-    range.insertNode(newInput);
-    const sel = window.getSelection();
-    sel.setBaseAndExtent(
-      anchorElement.nextSibling,
-      1,
-      anchorElement.nextSibling,
-      1
-    );
-    appendTextNode();
-    console.log("edge!!!");
-  }
-  if (e.data === "*") {
-    // const sel = window.getSelection();
-    // sliceInlineMarks(sel.anchorNode, sel.anchorOffset);
-    appendTextNode();
-    boldInlineCapture();
-  }
-  if (e.data === " ") {
-    console.log("capture SPACE");
-    const anchorText = currentCursorNode();
-    const anchorOffset = window.getSelection().anchorOffset;
-    console.log(anchorText);
-    const allText = isTextHadBoldMark(anchorText.wholeText);
-
-    // if there is bold mark in anchorNode, starting replacing and add the style
-    if (allText) {
-      const parentNode = anchorText.parentNode;
-      console.log("---", window.getSelection().anchorOffset);
-      debugger;
-      replaceTextAndAddMarkElements(parentNode, anchorText, allText);
-      setCursorPos(parentNode, anchorOffset, allText);
-    }
-  }
-
-  if (e.inputType === "deleteContentBackward") {
-    console.log("capture BACKSPACE, input are", currentCursorNode());
-  }
-
-  return;
-};
-
+/**
+ * capture if current textNode has bold syntax
+ * @returns {void}
+ */
 export function boldInlineCapture() {
-  console.log("boldInlineCapture()");
   const anchorText = currentCursorNode();
   const anchorOffset = window.getSelection().anchorOffset;
-  console.log(anchorText);
   const allText = isTextHadBoldMark(anchorText.wholeText);
 
   // if there is bold mark in anchorNode, starting replacing and add the style
   if (allText) {
     const parentNode = anchorText.parentNode;
-    console.log("---", window.getSelection().anchorOffset);
-
-    replaceTextAndAddMarkElements(parentNode, anchorText, allText);
-    // debugger;
-    setCursorPos(parentNode, anchorOffset, allText);
+    let firstNode = replaceTextAndAddMarkElements(
+      parentNode,
+      anchorText,
+      allText
+    );
+    setCaretOffset(firstNode, anchorOffset);
   }
   return;
 }
 
 /**
- *
+ * this function replace the text with a styled fragments
+ * @param {Node} parentNode the parent paragraph, usually p tag
+ * @param {Node} oldChildNode the old node going to be replaced, usually textNode within marks
  * @param {object} makredTextWithSiblings, it including, p, m, n as keys to present the wholeText
- * @returns
+ * @returns {firstNode} it return first node in the styled fragment, ususally text before the left marks
  */
 export function replaceTextAndAddMarkElements(
   parentNode,
@@ -243,7 +159,7 @@ export function replaceTextAndAddMarkElements(
     markSpanRight.className = "bold show";
     const boldNode = document.createElement("B");
     boldNode.innerText = boldText;
-    const nodesFragment = document.createDocumentFragment();
+    let nodesFragment = document.createDocumentFragment();
     const prevTextNode = document.createTextNode(makredTextWithSiblings.p);
     const nextTextNode = makredTextWithSiblings.n
       ? document.createTextNode(makredTextWithSiblings.n)
@@ -256,29 +172,12 @@ export function replaceTextAndAddMarkElements(
       markSpanRight,
       nextTextNode
     );
-
+    console.log("nodesFragement", nodesFragment.childElementCount);
+    console.log(nodesFragment);
     parentNode.replaceChild(nodesFragment, oldChildNode);
-  }
-  return false;
-}
-
-export function setCursorPos(parentNode, offset, matchedText) {
-  console.log("set cursor", parentNode, offset, matchedText);
-  const sel = window.getSelection();
-  if (!matchedText) {
-    return false;
-  }
-  console.log("length", matchedText.p.length);
-  if (offset > matchedText.p.length + 2) {
-    sel.setBaseAndExtent(parentNode.lastChild, 0, parentNode.lastChild, 0);
+    return prevTextNode;
   } else {
-    console.log("ELSE - set cursor");
-    sel.setBaseAndExtent(
-      parentNode.firstChild.nextSibling.nextSibling.firstChild,
-      0, // 2 is length of "**"
-      parentNode.firstChild.nextSibling.nextSibling.firstChild,
-      0
-    );
+    return false;
   }
 }
 
@@ -333,13 +232,8 @@ export function updateInlineStyleState() {
   const currentElement = getElementNode();
   const anchorNode = window.getSelection().anchorNode;
   const anchorOffSet = window.getSelection().anchorOffset;
-  console.log(
-    "currentElement.className",
-    currentElement,
-    currentElement.className
-  );
 
-  // this show marks span if you just behind the bold
+  // this show marks span if your cursor/caret just behind the bold
   if (
     anchorNode.nextSibling &&
     anchorNode.nextSibling.className &&
@@ -351,14 +245,13 @@ export function updateInlineStyleState() {
   }
 
   // if cursor in a bold node
+  // note: before first letter might not be reckon inside b node
   if (getCurrentCursorNodeName() === "B") {
     const boldElement = getElementNode();
-    if (boldElement.previousSibling.nodeName !== "SPAN") {
-      // add before span
-    }
-
-    // if closing mark tag is missing
+    // if closing mark tag is missing - only should in chrome
+    // e.g. ab**cd**ef, when you delete e, right ** will remove in chrome
     if (boldElement.nextSibling.nodeName !== "SPAN") {
+      debugger;
       //add after span
       console.log("MISSING NEXT SIBLING");
       const nextBoldSpan = document.createElement("SPAN");
@@ -375,30 +268,34 @@ export function updateInlineStyleState() {
         0
       );
     }
-    // shieldInlineElement();
+
+    // if cursor in inline B element
     if (getCurrentCursorNodeName() === "B") {
       showPrevAndNextSiblingSpan();
     }
 
     const anchorNode = window.getSelection().anchorNode;
-    const anchorOffSet = window.getSelection().anchorOffset;
+    const anchorOffset = window.getSelection().anchorOffset;
     // this show marks span if you just behind the bold
     if (
       anchorNode.previousSibling &&
       anchorNode.previousSibling.nodeName === "SPAN" &&
-      anchorOffSet === 0
+      anchorOffset === 0
     ) {
       showPrevAndNextSiblingSpan(anchorNode.previousSibling.previousSibling);
     }
 
+    // this will trigger when you cursor jump from one bold paragraph to another bold element in another paragraph.
     if (isParaChange()) {
       const lastPositioNode = getCursorState().last;
       hideSiblingSpan(lastPositioNode);
     }
+
     return;
   }
 
   const anchorOffset = window.getSelection().anchorOffset;
+  // if it leave the bold and right after inline mark style
   if (
     (getCurrentCursorNodeName() === "P" && anchorOffset !== 0) ||
     isParaChange()
@@ -407,14 +304,13 @@ export function updateInlineStyleState() {
     hideSiblingSpan(lastPositioNode);
   }
 }
-export function sliceInlineMarks(anchorNode, anchorOffset) {
-  console.log("anchorOffSet", anchorOffset);
-  anchorNode.splitText(anchorOffset);
-  return;
-}
 
+/**
+ * this function to protect everytime when marks match and trigger, it should always a full textNode been select. sometimes text might be split into two or more, this feature just append sibling node into one if it is textNode
+ * @param {textNode} textNode
+ * @returns {void}
+ */
 export function appendTextNode(textNode) {
-  console.log("appendTextNode");
   const anchorOffset = window.getSelection().anchorOffset;
   const anchorNode = textNode ? textNode : window.getSelection().anchorNode;
   let nextTextNode = anchorNode.nextSibling;
