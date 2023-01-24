@@ -47,8 +47,44 @@ export function disableBoldInlineStyle(e) {
   console.log(e);
   // e.g: <span>0*1*2</span>
   // position 1 and 2's cursor position in span
-  if (e.inputType === "deleteContentBackward") {
-    console.log("delete capture", getElementNode());
+  console.log("----", getElementNode());
+  if (
+    e.inputType === "deleteContentBackward" &&
+    getElementNode().classList.contains("bold")
+  ) {
+    debugger;
+    const sel = window.getSelection();
+    const anchorOffset = sel.anchorOffset;
+    const anchorElement = getElementNode();
+    console.log("delete capture", anchorElement);
+    let boldNode;
+    let isPrev;
+    if (anchorElement.previousSibling.nodeName === "B") {
+      boldNode = anchorElement.previousSibling;
+      isPrev = false;
+    } else {
+      boldNode = anchorElement.nextSibling;
+      isPrev = true;
+    }
+    const prevSpanNode = boldNode.previousSibling;
+    const nextSpanNode = boldNode.nextSibling;
+    const textPrev = document.createTextNode(prevSpanNode.innerText);
+    const textNext = document.createTextNode(nextSpanNode.innerText);
+    const textBody = document.createTextNode(boldNode.innerText);
+    const parentNode = anchorElement.parentNode;
+    parentNode.replaceChild(textPrev, prevSpanNode);
+    parentNode.replaceChild(textNext, nextSpanNode);
+    parentNode.replaceChild(textBody, boldNode);
+    // boldNode.outerHTML = boldNode.innerText;
+    const ajustOffset = isPrev
+      ? anchorOffset
+      : anchorOffset + textPrev.length + textBody.length;
+    appendTextNode(textPrev);
+    sel.setBaseAndExtent(textPrev, ajustOffset, textPrev, ajustOffset);
+
+    // let prevText = prevSpanNode.innerText;
+    // let nextText = nextSpanNode.innerText;
+    // const parentNode = getElementNode().parentNode;
   }
   // position 0 cursor position is textNode before span
   if (e.inputType === "deleteContentForward") {
@@ -134,7 +170,7 @@ export function shieldInlineElement() {
 export function boldInlineCapture() {
   const anchorText = currentCursorNode();
   const anchorOffset = window.getSelection().anchorOffset;
-  const allText = isTextHadBoldMark(anchorText.wholeText);
+  const allText = isTextHadBoldMark(anchorText.textContent);
 
   // if there is bold mark in anchorNode, starting replacing and add the style
   if (allText) {
@@ -265,7 +301,10 @@ export function updateInlineStyleState() {
     const boldElement = getElementNode();
     // if closing mark tag is missing - only should in chrome
     // e.g. ab**cd**ef, when you delete e, right ** will remove in chrome
-    if (boldElement.nextSibling.nodeName !== "SPAN") {
+    const isSpanMark =
+      boldElement.nextSibling.nodeName === "SPAN" &&
+      boldElement.nextSibling.classList.contains("bold"); //delete from paragraph will generate a span :(
+    if (!isSpanMark || boldElement.nextSibling.nodeName !== "SPAN") {
       //add after span
       console.log("MISSING NEXT SIBLING");
       const nextBoldSpan = document.createElement("SPAN");
