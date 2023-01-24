@@ -43,6 +43,19 @@ function setNodeOffset(node, offset) {
   sel.setBaseAndExtent(currNode, offset, currNode, offset);
 }
 
+export function disableBoldInlineStyle(e) {
+  console.log(e);
+  // e.g: <span>0*1*2</span>
+  // position 1 and 2's cursor position in span
+  if (e.inputType === "deleteContentBackward") {
+    console.log("delete capture", getElementNode());
+  }
+  // position 0 cursor position is textNode before span
+  if (e.inputType === "deleteContentForward") {
+    // tbd
+  }
+}
+
 /**
  * test if text has matched bold marks in the text
  * @param {string} text full text from the node to be text regex, usually textContent from textNode
@@ -190,6 +203,8 @@ export function showPrevAndNextSiblingSpan(node) {
   console.log("showPreAndNextSiblings");
   const currentAnchorNode = node ? node : getElementNode();
   currentAnchorNode.previousSibling.classList.remove("hide");
+  currentAnchorNode.previousSibling.classList.add("show");
+  currentAnchorNode.nextSibling.classList.remove("hide");
   currentAnchorNode.nextSibling.classList.add("show");
 }
 
@@ -208,8 +223,8 @@ export function isParaChange() {
 }
 
 export function setAndUpdateCursorNodeState() {
-  console.log("update State call");
   const anchorNode = getElementNode();
+  console.log("anchor element is -> ", anchorNode);
   const currentCursorNode =
     anchorNode.nodeName !== "P" ? anchorNode.parentNode : anchorNode;
   cursorAtLastParaNode = cursorAtCurrentParaNode;
@@ -229,16 +244,16 @@ export function getCursorState() {
 export function inputEndOfMarkSpan() {}
 
 export function updateInlineStyleState() {
-  const currentElement = getElementNode();
-  const anchorNode = window.getSelection().anchorNode;
-  const anchorOffSet = window.getSelection().anchorOffset;
+  let anchorNode = window.getSelection().anchorNode;
+  let anchorOffset = window.getSelection().anchorOffset;
 
-  // this show marks span if your cursor/caret just behind the bold
+  // this show marks span if your cursor/caret just before the bold
+  // e.g. (I)**ab**
   if (
     anchorNode.nextSibling &&
     anchorNode.nextSibling.className &&
     anchorNode.nextSibling.className.indexOf("bold") >= 0 &&
-    anchorOffSet === anchorNode.textContent.length
+    anchorOffset === anchorNode.textContent.length
   ) {
     showPrevAndNextSiblingSpan(anchorNode.nextSibling.nextSibling);
     return;
@@ -251,7 +266,6 @@ export function updateInlineStyleState() {
     // if closing mark tag is missing - only should in chrome
     // e.g. ab**cd**ef, when you delete e, right ** will remove in chrome
     if (boldElement.nextSibling.nodeName !== "SPAN") {
-      debugger;
       //add after span
       console.log("MISSING NEXT SIBLING");
       const nextBoldSpan = document.createElement("SPAN");
@@ -269,13 +283,23 @@ export function updateInlineStyleState() {
       );
     }
 
-    // if cursor in inline B element
-    if (getCurrentCursorNodeName() === "B") {
+    anchorNode = window.getSelection().anchorNode;
+    // **dccd**(I)text - when ** is hide and
+    if (
+      anchorOffset === anchorNode.textContent.length &&
+      getElementNode().nextSibling.classList.contains("hide") &&
+      getElementNode().nextSibling.classList.contains("bold")
+    ) {
+      console.log("SOS", getCursorState().current, getCursorState().last);
       showPrevAndNextSiblingSpan();
+      setNodeOffset(
+        getElementNode().nextSibling,
+        getElementNode().nextSibling.innerText.length
+      );
     }
 
-    const anchorNode = window.getSelection().anchorNode;
-    const anchorOffset = window.getSelection().anchorOffset;
+    anchorNode = window.getSelection().anchorNode;
+    anchorOffset = window.getSelection().anchorOffset;
     // this show marks span if you just behind the bold
     if (
       anchorNode.previousSibling &&
@@ -294,7 +318,7 @@ export function updateInlineStyleState() {
     return;
   }
 
-  const anchorOffset = window.getSelection().anchorOffset;
+  anchorOffset = window.getSelection().anchorOffset;
   // if it leave the bold and right after inline mark style
   if (
     (getCurrentCursorNodeName() === "P" && anchorOffset !== 0) ||

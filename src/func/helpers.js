@@ -5,6 +5,7 @@ import {
   appendTextNode,
   boldInlineCapture,
   handleInputInBoldBeforeFirstChar,
+  disableBoldInlineStyle,
   isTextHadBoldMark,
 } from "./inlineHelpers";
 import { currentCursorNode, getElementNode } from "./eventHelpers";
@@ -26,6 +27,7 @@ function onInput(e) {
   const anchorOffSet = window.getSelection().anchorOffset;
   let anchorElement = getElementNode();
 
+  disableBoldInlineStyle(e);
   console.log("---- on input", anchorOffSet, anchorElement.previousSibling);
   // input on index 0, but char will go previous element
   // this also can be in updateCursorStatu function to manually move to next text node
