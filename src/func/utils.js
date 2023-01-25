@@ -15,3 +15,39 @@ export function addNewParagraph(text) {
 export function getEditorElement() {
   return document.getElementById("free-style");
 }
+
+/**
+ * This function will set new curosr/Caret position to new node by the old node offset
+ * @param {node} nodeFragments, when window.getSelection() catch a textNode on current cursor and going to be change to a inline style, this is the new Node which has inline sytled applied.
+ * @param {number} offset, the offset before the inline style change
+ * @returns {void | false}
+ */
+export function setCaretOffset(firstNode, offset) {
+  let restOffset = offset;
+  let currentFragment = firstNode;
+
+  while (currentFragment && restOffset > nodeSize(currentFragment)) {
+    restOffset = restOffset - nodeSize(currentFragment);
+    currentFragment = currentFragment.nextSibling;
+  }
+
+  setNodeOffset(currentFragment, restOffset);
+  return true;
+}
+
+export function nodeSize(node) {
+  if (node.nodeType === 3) {
+    return node.textContent.length;
+  }
+  return node.innerText.length;
+}
+
+export function setNodeOffset(node, offset) {
+  let currNode = node;
+  while (currNode && currNode.nodeType !== 3) {
+    currNode = currNode.firstChild;
+  }
+
+  const sel = window.getSelection();
+  sel.setBaseAndExtent(currNode, offset, currNode, offset);
+}

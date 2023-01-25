@@ -4,43 +4,62 @@ import {
   getElementNode,
   getBoldText,
 } from "./eventHelpers";
+import { setCaretOffset, setNodeOffset } from "./utils";
 
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 
 /**
- * This function will set new curosr/Caret position to new node by the old node offset
- * @param {node} nodeFragments, when window.getSelection() catch a textNode on current cursor and going to be change to a inline style, this is the new Node which has inline sytled applied.
- * @param {number} offset, the offset before the inline style change
- * @returns {void | false}
+ * this function to enable existed style to show mark span
+ * @param {event} e pass event
  */
-export function setCaretOffset(firstNode, offset) {
-  let restOffset = offset;
-  let currentFragment = firstNode;
-
-  while (currentFragment && restOffset > nodeSize(currentFragment)) {
-    restOffset = restOffset - nodeSize(currentFragment);
-    currentFragment = currentFragment.nextSibling;
+export function enableBoldInlineStyle(e) {
+  const anchorNode = window.getSelection().anchorNode;
+  const anchorOffSet = window.getSelection().anchorOffset;
+  let anchorElement = getElementNode();
+  if (
+    isBoldMarkSpan(anchorElement) &&
+    anchorOffSet === anchorElement.innerText.length
+  ) {
+    handleInputInBoldBeforeFirstChar(e);
   }
 
-  setNodeOffset(currentFragment, restOffset);
-  return true;
+  if (isBoldMarkSpan(anchorElement) && anchorOffSet === anchorNode.length) {
+    const range = document.createRange();
+    range.selectNode(anchorElement.nextSibling);
+    if (e.data) {
+      // if not input, eg. backspace wont have issue
+      let newInput = document.createTextNode(e.data);
+      anchorNode.textContent = "**";
+      range.insertNode(newInput);
+      const sel = window.getSelection();
+      sel.setBaseAndExtent(
+        anchorElement.nextSibling,
+        1,
+        anchorElement.nextSibling,
+        1
+      );
+      appendTextNode();
+    }
+  }
 }
 
-function nodeSize(node) {
-  if (node.nodeType === 3) {
-    return node.textContent.length;
-  }
-  return node.innerText.length;
-}
-
-function setNodeOffset(node, offset) {
-  let currNode = node;
-  while (currNode && currNode.nodeType !== 3) {
-    currNode = currNode.firstChild;
-  }
-
-  const sel = window.getSelection();
-  sel.setBaseAndExtent(currNode, offset, currNode, offset);
+export function boldMarkStyleToText(boldNode) {
+  const anchorElement = getElementNode();
+  const prevSpanNode = boldNode.previousSibling;
+  const nextSpanNode = boldNode.nextSibling;
+  const textPrev = document.createTextNode(prevSpanNode.innerText);
+  const textNext = document.createTextNode(nextSpanNode.innerText);
+  const textBody = document.createTextNode(boldNode.innerText);
+  const parentNode =
+    anchorElement.nodeName === "P" ? anchorElement : anchorElement.parentNode;
+  parentNode.replaceChild(textPrev, prevSpanNode);
+  parentNode.replaceChild(textNext, nextSpanNode);
+  parentNode.replaceChild(textBody, boldNode);
+  return {
+    textPrev,
+    textBody,
+    textNext,
+  };
 }
 
 export function disableBoldInlineStyle(e) {
@@ -50,58 +69,30 @@ export function disableBoldInlineStyle(e) {
   if (
     e.inputType === "deleteContentBackward" &&
     getElementNode().nodeName === "P" &&
-    window.getSelection().anchorNode.nextSibling &&
-    window.getSelection().anchorNode.nextSibling.nodeName === "SPAN" &&
-    window.getSelection().anchorNode.nextSibling.classList.contains("bold")
+    isBoldMarkSpan(window.getSelection().anchorNode.nextSibling)
   ) {
     console.log("capture in position left span position 1");
-    const sel = window.getSelection();
-    const anchorOffset = sel.anchorOffset;
-    const anchorElement = getElementNode();
-    console.log("delete capture", anchorElement);
     let boldNode = window.getSelection().anchorNode.nextSibling.nextSibling;
     const ajustOffset = 0;
-    const prevSpanNode = boldNode.previousSibling;
-    const nextSpanNode = boldNode.nextSibling;
-    const textPrev = document.createTextNode(prevSpanNode.innerText);
-    const textNext = document.createTextNode(nextSpanNode.innerText);
-    const textBody = document.createTextNode(boldNode.innerText);
-    const parentNode = anchorElement;
-    parentNode.replaceChild(textPrev, prevSpanNode);
-    parentNode.replaceChild(textNext, nextSpanNode);
-    parentNode.replaceChild(textBody, boldNode);
-    appendTextNode(textPrev, ajustOffset);
-    sel.setBaseAndExtent(textPrev, ajustOffset, textPrev, ajustOffset);
-
+    const textAfterConvert = boldMarkStyleToText(boldNode);
+    appendTextNode(textAfterConvert.textPrev, ajustOffset);
+    setNodeOffset(textAfterConvert.textPrev, ajustOffset);
     return;
   }
 
   // position 1's **<b>text<b>*(I)* cursor will position in bold
   if (
     e.inputType === "deleteContentBackward" &&
-    getElementNode().nextSibling &&
-    getElementNode().nextSibling.nodeType !== 3 &&
-    getElementNode().nextSibling.classList.contains("bold")
+    isBoldMarkSpan(getElementNode().nextSibling)
   ) {
     console.log("capture in right span position 1");
     const sel = window.getSelection();
     const anchorOffset = sel.anchorOffset;
-    const anchorElement = getElementNode();
-    console.log("delete capture", anchorElement);
     let boldNode = getElementNode();
-    const prevSpanNode = boldNode.previousSibling;
-    const nextSpanNode = boldNode.nextSibling;
-    const textPrev = document.createTextNode(prevSpanNode.innerText);
-    const textNext = document.createTextNode(nextSpanNode.innerText);
-    const textBody = document.createTextNode(boldNode.innerText);
-    const parentNode = anchorElement.parentNode;
-    parentNode.replaceChild(textPrev, prevSpanNode);
-    parentNode.replaceChild(textNext, nextSpanNode);
-    parentNode.replaceChild(textBody, boldNode);
-    const ajustOffset = anchorOffset + textPrev.length;
-    appendTextNode(textPrev);
-    sel.setBaseAndExtent(textPrev, ajustOffset, textPrev, ajustOffset);
-
+    const textAfterConvert = boldMarkStyleToText(boldNode);
+    const ajustOffset = anchorOffset + textAfterConvert.textPrev.length;
+    appendTextNode(textAfterConvert.textPrev);
+    setNodeOffset(textAfterConvert.textPrev, ajustOffset);
     return;
   }
   // position 2's cursor position in span
@@ -114,7 +105,6 @@ export function disableBoldInlineStyle(e) {
     const sel = window.getSelection();
     const anchorOffset = sel.anchorOffset;
     const anchorElement = getElementNode();
-    console.log("delete capture", anchorElement);
     let boldNode;
     let isPrev;
     if (anchorElement.previousSibling.nodeName === "B") {
@@ -124,25 +114,15 @@ export function disableBoldInlineStyle(e) {
       boldNode = anchorElement.nextSibling;
       isPrev = true;
     }
-    const prevSpanNode = boldNode.previousSibling;
-    const nextSpanNode = boldNode.nextSibling;
-    const textPrev = document.createTextNode(prevSpanNode.innerText);
-    const textNext = document.createTextNode(nextSpanNode.innerText);
-    const textBody = document.createTextNode(boldNode.innerText);
-    const parentNode = anchorElement.parentNode;
-    parentNode.replaceChild(textPrev, prevSpanNode);
-    parentNode.replaceChild(textNext, nextSpanNode);
-    parentNode.replaceChild(textBody, boldNode);
+    const textAfterConvert = boldMarkStyleToText(boldNode);
     // boldNode.outerHTML = boldNode.innerText;
     const ajustOffset = isPrev
       ? anchorOffset
-      : anchorOffset + textPrev.length + textBody.length;
-    appendTextNode(textPrev);
-    sel.setBaseAndExtent(textPrev, ajustOffset, textPrev, ajustOffset);
-
-    // let prevText = prevSpanNode.innerText;
-    // let nextText = nextSpanNode.innerText;
-    // const parentNode = getElementNode().parentNode;
+      : anchorOffset +
+        textAfterConvert.textPrev.length +
+        textAfterConvert.textBody.length;
+    appendTextNode(textAfterConvert.textPrev);
+    setNodeOffset(textAfterConvert.textPrev, ajustOffset);
     return;
   }
   // position 0 cursor position is textNode before span
@@ -212,17 +192,6 @@ export function getCurrentParaNode() {
 }
 
 /**
- * this is function to secure inline style should always have span before
- * and after. otherwise, this function should add the missing span
- * chrome backspace will delete hidden element but firefox no, so this is
- * mainly for chrome.
- */
-export function shieldInlineElement() {
-  console.log("secure inline style");
-  return;
-}
-
-/**
  * capture if current textNode has bold syntax
  * @returns {void}
  */
@@ -289,7 +258,7 @@ export function replaceTextAndAddMarkElements(
   }
 }
 
-export function getCurrentCursorNodeName(anchorNode) {
+export function getCurrentCursorNodeName() {
   const node = getElementNode();
   return node.nodeName;
 }
@@ -306,7 +275,7 @@ export function showPrevAndNextSiblingSpan(node) {
 export function hideSiblingSpan(node) {
   const currentAnchorNode = node ? node : getElementNode();
   currentAnchorNode.childNodes.forEach((child) => {
-    if (child.nodeName === "SPAN") {
+    if (isBoldMarkSpan(child)) {
       child.classList.remove("show");
       child.classList.add("hide");
     }
@@ -319,7 +288,6 @@ export function isParaChange() {
 
 export function setAndUpdateCursorNodeState() {
   const anchorNode = getElementNode();
-  console.log("anchor element is -> ", anchorNode);
   const currentCursorNode =
     anchorNode.nodeName !== "P" ? anchorNode.parentNode : anchorNode;
   cursorAtLastParaNode = cursorAtCurrentParaNode;
@@ -357,15 +325,19 @@ export function updateInlineStyleState() {
   // if cursor in a bold node
   // note: before first letter might not be reckon inside b node
   if (getCurrentCursorNodeName() === "B") {
+    debugger;
     const boldElement = getElementNode();
+    let anchorOffset = window.getSelection().anchorOffset;
+    if (anchorOffset > 0 && anchorOffset < boldElement.innerText.length) {
+      showPrevAndNextSiblingSpan();
+    }
     // if closing mark tag is missing - only should in chrome
     // e.g. ab**cd**ef, when you delete e, right ** will remove in chrome
-    const isSpanMark =
-      boldElement.nextSibling.nodeName === "SPAN" &&
-      boldElement.nextSibling.classList.contains("bold"); //delete from paragraph will generate a span :(
-    if (!isSpanMark || boldElement.nextSibling.nodeName !== "SPAN") {
+    if (
+      !isBoldMarkSpan(boldElement.nextSibling) ||
+      boldElement.nextSibling.nodeName !== "SPAN"
+    ) {
       //add after span
-      console.log("MISSING NEXT SIBLING");
       const nextBoldSpan = document.createElement("SPAN");
       nextBoldSpan.innerText = "**";
       nextBoldSpan.className = "bold show";
@@ -455,4 +427,11 @@ export function appendTextNode(textNode, offset) {
 
   const sel = window.getSelection();
   sel.setBaseAndExtent(anchorNode, manualOffset, anchorNode, manualOffset);
+}
+
+export function isBoldMarkSpan(node) {
+  if (!node) {
+    return false;
+  }
+  return node.nodeName === "SPAN" && node.classList.contains("bold");
 }

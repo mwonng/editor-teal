@@ -4,11 +4,9 @@ import {
   updateInlineStyleState,
   appendTextNode,
   boldInlineCapture,
-  handleInputInBoldBeforeFirstChar,
   disableBoldInlineStyle,
-  isTextHadBoldMark,
+  enableBoldInlineStyle,
 } from "./inlineHelpers";
-import { currentCursorNode, getElementNode } from "./eventHelpers";
 
 // bindings!!
 export function bindingListeners(node) {
@@ -23,51 +21,12 @@ export function bindingListeners(node) {
 }
 
 function onInput(e) {
-  const anchorNode = window.getSelection().anchorNode;
-  const anchorOffSet = window.getSelection().anchorOffset;
-  let anchorElement = getElementNode();
-
+  enableBoldInlineStyle(e);
   disableBoldInlineStyle(e);
-  console.log("---- on input", anchorOffSet, anchorElement.previousSibling);
-  // input on index 0, but char will go previous element
-  // this also can be in updateCursorStatu function to manually move to next text node
-  if (
-    anchorElement.className.indexOf("bold") >= 0 &&
-    anchorOffSet === anchorElement.innerText.length
-  ) {
-    handleInputInBoldBeforeFirstChar(e);
-  }
 
-  if (
-    getElementNode().nodeName === "SPAN" &&
-    anchorOffSet === anchorNode.length
-  ) {
-    console.log("edge condition", anchorNode.textContent);
-    const range = document.createRange();
-    range.selectNode(anchorElement.nextSibling);
-    if (e.data) {
-      // if not input, eg. backspace wont have issue
-      let newInput = document.createTextNode(e.data);
-      anchorNode.textContent = "**";
-      range.insertNode(newInput);
-      const sel = window.getSelection();
-      sel.setBaseAndExtent(
-        anchorElement.nextSibling,
-        1,
-        anchorElement.nextSibling,
-        1
-      );
-      appendTextNode();
-      console.log("edge!!!");
-    }
-  }
-  if (e.data === "*") {
+  if (e.data === "*" || e.data === null) {
     appendTextNode();
     boldInlineCapture();
-  }
-
-  if (e.inputType === "deleteContentBackward") {
-    console.log("capture BACKSPACE, input are", currentCursorNode());
   }
 
   return;
