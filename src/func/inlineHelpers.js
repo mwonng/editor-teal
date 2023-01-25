@@ -346,6 +346,15 @@ export function updateInlineStyleState() {
       anchorOffset === 0
     ) {
       showPrevAndNextSiblingSpan(anchorNode.previousSibling.previousSibling);
+
+      // this case: insert a paragraph by enter after **text**(I)
+      // and when backspace and detelte the new parapraph, it will generate a new span
+      if (
+        anchorNode.nodeName === "SPAN" &&
+        !anchorNode.classList.contains("bold")
+      ) {
+        anchorNode.outerHTML = anchorNode.innerText;
+      }
     }
 
     // this will trigger when you cursor jump from one bold paragraph to another bold element in another paragraph.
