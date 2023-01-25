@@ -44,9 +44,67 @@ function setNodeOffset(node, offset) {
 }
 
 export function disableBoldInlineStyle(e) {
-  console.log(e);
+  console.log(e, getElementNode());
   // e.g: <span>0*1*2</span>
-  // position 1 and 2's cursor position in span
+  // position: *(I)*text**, press backspace
+  if (
+    e.inputType === "deleteContentBackward" &&
+    getElementNode().nodeName === "P" &&
+    window.getSelection().anchorNode.nextSibling &&
+    window.getSelection().anchorNode.nextSibling.nodeName === "SPAN" &&
+    window.getSelection().anchorNode.nextSibling.classList.contains("bold")
+  ) {
+    console.log("capture in position left span position 1");
+    const sel = window.getSelection();
+    const anchorOffset = sel.anchorOffset;
+    const anchorElement = getElementNode();
+    console.log("delete capture", anchorElement);
+    let boldNode = window.getSelection().anchorNode.nextSibling.nextSibling;
+    const ajustOffset = 0;
+    const prevSpanNode = boldNode.previousSibling;
+    const nextSpanNode = boldNode.nextSibling;
+    const textPrev = document.createTextNode(prevSpanNode.innerText);
+    const textNext = document.createTextNode(nextSpanNode.innerText);
+    const textBody = document.createTextNode(boldNode.innerText);
+    const parentNode = anchorElement;
+    parentNode.replaceChild(textPrev, prevSpanNode);
+    parentNode.replaceChild(textNext, nextSpanNode);
+    parentNode.replaceChild(textBody, boldNode);
+    appendTextNode(textPrev, ajustOffset);
+    sel.setBaseAndExtent(textPrev, ajustOffset, textPrev, ajustOffset);
+
+    return;
+  }
+
+  // position 1's **<b>text<b>*(I)* cursor will position in bold
+  if (
+    e.inputType === "deleteContentBackward" &&
+    getElementNode().nextSibling &&
+    getElementNode().nextSibling.nodeType !== 3 &&
+    getElementNode().nextSibling.classList.contains("bold")
+  ) {
+    console.log("capture in right span position 1");
+    const sel = window.getSelection();
+    const anchorOffset = sel.anchorOffset;
+    const anchorElement = getElementNode();
+    console.log("delete capture", anchorElement);
+    let boldNode = getElementNode();
+    const prevSpanNode = boldNode.previousSibling;
+    const nextSpanNode = boldNode.nextSibling;
+    const textPrev = document.createTextNode(prevSpanNode.innerText);
+    const textNext = document.createTextNode(nextSpanNode.innerText);
+    const textBody = document.createTextNode(boldNode.innerText);
+    const parentNode = anchorElement.parentNode;
+    parentNode.replaceChild(textPrev, prevSpanNode);
+    parentNode.replaceChild(textNext, nextSpanNode);
+    parentNode.replaceChild(textBody, boldNode);
+    const ajustOffset = anchorOffset + textPrev.length;
+    appendTextNode(textPrev);
+    sel.setBaseAndExtent(textPrev, ajustOffset, textPrev, ajustOffset);
+
+    return;
+  }
+  // position 2's cursor position in span
   console.log("----", getElementNode());
   if (
     e.inputType === "deleteContentBackward" &&
@@ -85,6 +143,7 @@ export function disableBoldInlineStyle(e) {
     // let prevText = prevSpanNode.innerText;
     // let nextText = nextSpanNode.innerText;
     // const parentNode = getElementNode().parentNode;
+    return;
   }
   // position 0 cursor position is textNode before span
   if (e.inputType === "deleteContentForward") {
@@ -382,11 +441,11 @@ export function updateInlineStyleState() {
  * @param {textNode} textNode
  * @returns {void}
  */
-export function appendTextNode(textNode) {
+export function appendTextNode(textNode, offset) {
   const anchorOffset = window.getSelection().anchorOffset;
   const anchorNode = textNode ? textNode : window.getSelection().anchorNode;
   let nextTextNode = anchorNode.nextSibling;
-
+  let manualOffset = offset == undefined ? anchorOffset : offset;
   while (nextTextNode && nextTextNode.nodeType === 3) {
     const nodeToRemove = nextTextNode;
     anchorNode.textContent += nextTextNode.textContent;
@@ -395,5 +454,5 @@ export function appendTextNode(textNode) {
   }
 
   const sel = window.getSelection();
-  sel.setBaseAndExtent(anchorNode, anchorOffset, anchorNode, anchorOffset);
+  sel.setBaseAndExtent(anchorNode, manualOffset, anchorNode, manualOffset);
 }
