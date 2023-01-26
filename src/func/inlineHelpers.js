@@ -8,7 +8,7 @@ import {
 import { setCaretOffset, setNodeOffset } from "./utils";
 
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
-
+let cursorAtLastElement, cursorAtCurrentElement;
 /**
  * this function to enable existed style to show mark span
  * @param {event} e pass event
@@ -22,6 +22,7 @@ export function enableBoldInlineStyle(e) {
     anchorOffSet === anchorElement.innerText.length
   ) {
     handleInputInBoldBeforeFirstChar(e);
+    return;
   }
 
   if (isBoldMarkSpan(anchorElement) && anchorOffSet === anchorNode.length) {
@@ -44,18 +45,53 @@ export function enableBoldInlineStyle(e) {
   }
 }
 
-export function boldMarkStyleToText(boldNode) {
+export function enableItalicInlineStyle(e) {
+  const anchorNode = window.getSelection().anchorNode;
+  const anchorOffSet = window.getSelection().anchorOffset;
+  let anchorElement = getElementNode();
+  if (
+    isItalicMarkSpan(anchorElement) &&
+    anchorOffSet === anchorElement.innerText.length
+  ) {
+    handleInputInItalicBeforeFirstChar(e);
+    return;
+  }
+
+  if (isItalicMarkSpan(anchorElement) && anchorOffSet === anchorNode.length) {
+    const range = document.createRange();
+    range.selectNode(anchorElement.nextSibling);
+    if (e.data) {
+      // if not input, eg. backspace wont have issue
+      let newInput = document.createTextNode(e.data);
+      anchorNode.textContent = "*";
+      range.insertNode(newInput);
+      const sel = window.getSelection();
+      sel.setBaseAndExtent(
+        anchorElement.nextSibling,
+        1,
+        anchorElement.nextSibling,
+        1
+      );
+      appendTextNode();
+    }
+  }
+}
+
+export function inlineMarkStyleToText(boldNode) {
   const anchorElement = getElementNode();
   const prevSpanNode = boldNode.previousSibling;
   const nextSpanNode = boldNode.nextSibling;
-  const textPrev = document.createTextNode(prevSpanNode.innerText);
-  const textNext = document.createTextNode(nextSpanNode.innerText);
-  const textBody = document.createTextNode(boldNode.innerText);
+  const textPrev =
+    prevSpanNode.innerText && document.createTextNode(prevSpanNode.innerText);
+  const textNext =
+    nextSpanNode.innerText && document.createTextNode(nextSpanNode.innerText);
+  const textBody =
+    boldNode.innerText && document.createTextNode(boldNode.innerText);
   const parentNode =
     anchorElement.nodeName === "P" ? anchorElement : anchorElement.parentNode;
-  parentNode.replaceChild(textPrev, prevSpanNode);
-  parentNode.replaceChild(textNext, nextSpanNode);
-  parentNode.replaceChild(textBody, boldNode);
+  textPrev && parentNode.replaceChild(textPrev, prevSpanNode);
+  textNext && parentNode.replaceChild(textNext, nextSpanNode);
+  textBody && parentNode.replaceChild(textBody, boldNode);
   return {
     textPrev,
     textBody,
@@ -75,7 +111,7 @@ export function disableBoldInlineStyle(e) {
     console.log("capture in position left span position 1");
     let boldNode = window.getSelection().anchorNode.nextSibling.nextSibling;
     const ajustOffset = 0;
-    const textAfterConvert = boldMarkStyleToText(boldNode);
+    const textAfterConvert = inlineMarkStyleToText(boldNode);
     appendTextNode(textAfterConvert.textPrev, ajustOffset);
     setNodeOffset(textAfterConvert.textPrev, ajustOffset);
     return;
@@ -90,7 +126,7 @@ export function disableBoldInlineStyle(e) {
     const sel = window.getSelection();
     const anchorOffset = sel.anchorOffset;
     let boldNode = getElementNode();
-    const textAfterConvert = boldMarkStyleToText(boldNode);
+    const textAfterConvert = inlineMarkStyleToText(boldNode);
     const ajustOffset = anchorOffset + textAfterConvert.textPrev.length;
     appendTextNode(textAfterConvert.textPrev);
     setNodeOffset(textAfterConvert.textPrev, ajustOffset);
@@ -102,7 +138,6 @@ export function disableBoldInlineStyle(e) {
     e.inputType === "deleteContentBackward" &&
     isBoldMarkSpan(getElementNode())
   ) {
-    debugger;
     const sel = window.getSelection();
     const anchorOffset = sel.anchorOffset;
     const anchorElement = getElementNode();
@@ -115,8 +150,7 @@ export function disableBoldInlineStyle(e) {
       boldNode = anchorElement.nextSibling;
       isPrev = true;
     }
-    const textAfterConvert = boldMarkStyleToText(boldNode);
-    // boldNode.outerHTML = boldNode.innerText;
+    const textAfterConvert = inlineMarkStyleToText(boldNode);
     const ajustOffset = isPrev
       ? anchorOffset
       : anchorOffset +
@@ -129,6 +163,43 @@ export function disableBoldInlineStyle(e) {
   // position 0 cursor position is textNode before span
   if (e.inputType === "deleteContentForward") {
     // tbd
+  }
+}
+
+export function disableItalicInlineStyle(e) {
+  // position 1's *<b>text<b>*(I) cursor will position in bold
+  if (
+    e.inputType === "deleteContentBackward" &&
+    getElementNode().nodeName === "I" &&
+    getCursorState().lastElement.textContent === "*"
+  ) {
+    console.log("capture in right span position 1");
+    const sel = window.getSelection();
+    const anchorOffset = sel.anchorOffset;
+    let boldNode = getElementNode();
+    const textAfterConvert = inlineMarkStyleToText(boldNode);
+    const ajustOffset = anchorOffset + textAfterConvert.textPrev.length;
+    appendTextNode(textAfterConvert.textPrev);
+    setNodeOffset(textAfterConvert.textPrev, ajustOffset);
+    return;
+  }
+
+  // e.g: <span>0*1</span>
+  // position: *(I)text*, press backspace
+  if (
+    e.inputType === "deleteContentBackward" &&
+    window.getSelection().anchorNode.nextSibling &&
+    window.getSelection().anchorNode.nextSibling.nodeName === "I" &&
+    getElementNode().nodeName === "P"
+  ) {
+    debugger;
+    console.log("capture in position left span position 1");
+    let boldNode = window.getSelection().anchorNode.nextSibling.nextSibling;
+    const ajustOffset = 0;
+    const textAfterConvert = inlineMarkStyleToText(boldNode);
+    appendTextNode(textAfterConvert.textPrev, ajustOffset);
+    setNodeOffset(textAfterConvert.textPrev, ajustOffset);
+    return;
   }
 }
 
@@ -197,6 +268,30 @@ export function handleInputInBoldBeforeFirstChar(e) {
   console.log("html position bug");
 }
 
+export function handleInputInItalicBeforeFirstChar(e) {
+  //TODO: if delete the first input it will go NULL?
+  // debugger;
+  console.log(e);
+  const anchorElement = getElementNode();
+  const input = e.data;
+  if (input) {
+    // if not input, eg. backspace wont have issue
+    const nextTextNode =
+      anchorElement.nextSibling.nodeType === 3
+        ? anchorElement.nextSibling
+        : anchorElement.nextSibling.firstChild;
+    let range = document.createRange();
+    let inputText = document.createTextNode(input);
+    range.selectNode(nextTextNode);
+    range.insertNode(inputText);
+    anchorElement.innerText = "*";
+    const sel = window.getSelection();
+    sel.setBaseAndExtent(inputText, 1, inputText, 1);
+    appendTextNode(inputText);
+  }
+  console.log("html position bug");
+}
+
 export function getCurrentParaNode() {
   let currentNode = window.getSelection().anchorNode;
   while (currentNode.nodeName !== "P") {
@@ -223,8 +318,9 @@ export function boldInlineCapture() {
       allText
     );
     setCaretOffset(firstNode, anchorOffset);
+    return true;
   }
-  return;
+  return false;
 }
 
 export function italicInlineCapture() {
@@ -328,7 +424,6 @@ export function getCurrentCursorNodeName() {
 }
 
 export function showPrevAndNextSiblingSpan(node) {
-  console.log("showPreAndNextSiblings");
   const currentAnchorNode = node ? node : getElementNode();
   currentAnchorNode.previousSibling.classList.remove("hide");
   currentAnchorNode.previousSibling.classList.add("show");
@@ -355,17 +450,24 @@ export function isParaChange() {
 }
 
 export function setAndUpdateCursorNodeState() {
-  const anchorNode = getElementNode();
+  console.log("cursor will update");
+  const anchorElement = getElementNode();
+  const anchorNode = window.getSelection().anchorNode;
+  const anchorOffset = window.getSelection().anchorOffset;
   const currentCursorNode =
-    anchorNode.nodeName !== "P" ? anchorNode.parentNode : anchorNode;
+    anchorElement.nodeName !== "P" ? anchorElement.parentNode : anchorElement;
   cursorAtLastParaNode = cursorAtCurrentParaNode;
   cursorAtCurrentParaNode = currentCursorNode;
+  cursorAtLastElement = cursorAtCurrentElement;
+  cursorAtCurrentElement = anchorNode;
 }
 
 export function getCursorState() {
   return {
     current: cursorAtCurrentParaNode,
     last: cursorAtLastParaNode,
+    cursorElement: cursorAtCurrentElement,
+    lastElement: cursorAtLastElement,
   };
 }
 
@@ -384,16 +486,14 @@ export function updateInlineStyleState() {
     isInlineMarkSpan(anchorNode.nextSibling) &&
     anchorOffset === anchorNode.textContent.length
   ) {
+    console.log("(I)**ab**");
     showPrevAndNextSiblingSpan(anchorNode.nextSibling.nextSibling);
     return;
   }
 
-  // if cursor in a bold node
+  // if cursor in a bold node, its only in bold, italic will have some exception
   // note: before first letter might not be reckon inside b node
-  if (
-    getCurrentCursorNodeName() === "B" ||
-    getCurrentCursorNodeName() === "I"
-  ) {
+  if (getCurrentCursorNodeName() === "B") {
     const boldElement = getElementNode();
     let anchorOffset = window.getSelection().anchorOffset;
     if (anchorOffset > 0 && anchorOffset < boldElement.innerText.length) {
@@ -406,19 +506,98 @@ export function updateInlineStyleState() {
       (boldElement.nextSibling && boldElement.nextSibling.nodeName !== "SPAN")
     ) {
       //add after span
+      console.log("trigger missing tail marks");
+      console.log("last", getCursorState().last);
+      console.log("curret", getCursorState().current);
       const nextBoldSpan = initMarkSpan(boldElement.nodeName);
       boldElement.after(nextBoldSpan);
       if (!nextBoldSpan.nextSibling) {
         nextBoldSpan.after(document.createTextNode("\u00A0"));
       }
       setNodeOffset(nextBoldSpan.nextSibling, 0);
+      setAndUpdateCursorNodeState();
     }
 
     anchorNode = window.getSelection().anchorNode;
+    anchorOffset = window.getSelection().anchorOffset;
     // **dccd**(I)text - when ** is hide and
-    console.log("???? ->", anchorNode);
     if (
       anchorOffset === anchorNode.textContent.length &&
+      getElementNode().nextSibling.classList.contains("hide") &&
+      isInlineMarkSpan(getElementNode().nextSibling)
+    ) {
+      console.log("SOS", getCursorState().current, getCursorState().last);
+      showPrevAndNextSiblingSpan();
+      setNodeOffset(
+        getElementNode().nextSibling,
+        getElementNode().nextSibling.innerText.length
+      );
+    }
+
+    anchorNode = window.getSelection().anchorNode;
+    anchorOffset = window.getSelection().anchorOffset;
+    // this show marks span if you just behind the bold
+    if (
+      anchorNode.previousSibling &&
+      anchorNode.previousSibling.nodeName === "SPAN" &&
+      anchorOffset === 0
+    ) {
+      showPrevAndNextSiblingSpan(anchorNode.previousSibling.previousSibling);
+
+      // this case: insert a paragraph by enter after **text**(I)
+      // and when backspace and detelte the new parapraph, it will generate a new span
+      if (
+        anchorNode.nodeName === "SPAN" &&
+        !anchorNode.classList.contains("bold")
+      ) {
+        anchorNode.outerHTML = anchorNode.innerText;
+      }
+    }
+
+    // this will trigger when you cursor jump from one bold paragraph to another bold element in another paragraph.
+    if (isParaChange()) {
+      const lastPositioNode = getCursorState().last;
+      hideSiblingSpan(lastPositioNode);
+    }
+
+    return;
+  }
+
+  if (getCurrentCursorNodeName() === "I") {
+    console.log("enter italic trigger", getCursorState());
+    const boldElement = getElementNode();
+    let anchorOffset = window.getSelection().anchorOffset;
+    if (anchorOffset > 0 && anchorOffset < boldElement.innerText.length) {
+      showPrevAndNextSiblingSpan();
+    }
+    // if closing mark tag is missing - only should in chrome
+    // e.g. ab**cd**ef, when you delete e, right ** will remove in chrome
+    if (
+      !isInlineMarkSpan(boldElement.nextSibling) ||
+      (boldElement.nextSibling && boldElement.nextSibling.nodeName !== "SPAN")
+    ) {
+      if (getCursorState().lastElement.textContent !== "*") {
+        //add after span
+        console.log("trigger missing tail marks");
+        console.log("last", getCursorState().last);
+        console.log("curret", getCursorState().current);
+        const nextBoldSpan = initMarkSpan(boldElement.nodeName);
+        boldElement.after(nextBoldSpan);
+        if (!nextBoldSpan.nextSibling) {
+          nextBoldSpan.after(document.createTextNode("\u00A0"));
+        }
+        setNodeOffset(nextBoldSpan.nextSibling, 0);
+        setAndUpdateCursorNodeState();
+      }
+    }
+
+    anchorNode = window.getSelection().anchorNode;
+    anchorOffset = window.getSelection().anchorOffset;
+    // **dccd**(I)text - when ** is hide and
+    if (
+      anchorOffset === anchorNode.textContent.length &&
+      getElementNode().nextSibling &&
+      getElementNode().nextSibling.classList &&
       getElementNode().nextSibling.classList.contains("hide") &&
       isInlineMarkSpan(getElementNode().nextSibling)
     ) {

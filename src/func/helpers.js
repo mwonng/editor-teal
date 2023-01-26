@@ -1,13 +1,16 @@
 import {
-  onSelectionChange,
-  setAndUpdateCursorNodeState,
-  updateInlineStyleState,
   appendTextNode,
   boldInlineCapture,
   disableBoldInlineStyle,
+  disableItalicInlineStyle,
   enableBoldInlineStyle,
+  enableItalicInlineStyle,
+  isTextHadBoldMark,
   isTextHadItalicMark,
   italicInlineCapture,
+  onSelectionChange,
+  setAndUpdateCursorNodeState,
+  updateInlineStyleState,
 } from "./inlineHelpers";
 
 // bindings!!
@@ -25,11 +28,25 @@ export function bindingListeners(node) {
 function onInput(e) {
   enableBoldInlineStyle(e);
   disableBoldInlineStyle(e);
+  enableItalicInlineStyle(e);
+  disableItalicInlineStyle(e);
+  if (e.inputType === "deleteContentBackward") {
+    console.log("backspace!!!", e.cancelable);
+    e.preventDefault();
+  }
 
   if (e.data === "*" || e.data === null) {
+    let anchorText = window.getSelection().anchorNode;
     appendTextNode();
-    // boldInlineCapture();
-    italicInlineCapture();
+    if (isTextHadBoldMark(anchorText.textContent)) {
+      boldInlineCapture();
+      return;
+    }
+    if (isTextHadItalicMark(anchorText.textContent)) {
+      console.log("capture ITA");
+      italicInlineCapture();
+      return;
+    }
   }
 
   return;
