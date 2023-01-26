@@ -1,3 +1,4 @@
+import { getElementNode } from "./eventHelpers";
 import {
   appendTextNode,
   boldInlineCapture,
@@ -38,14 +39,16 @@ function onInput(e) {
   if (e.data === "*" || e.data === null) {
     let anchorText = window.getSelection().anchorNode;
     appendTextNode();
-    if (isTextHadBoldMark(anchorText.textContent)) {
+
+    console.log("-->>>", getElementNode().nodeName);
+    if (getElementNode().nodeName !== "B") {
       boldInlineCapture();
-      return;
+      // return;
     }
-    if (isTextHadItalicMark(anchorText.textContent)) {
+    if (getElementNode().nodeName !== "I") {
       console.log("capture ITA");
       italicInlineCapture();
-      return;
+      // return;
     }
   }
 

@@ -365,7 +365,9 @@ export function replaceTextAndAddMarkElements(
     const prevTextNode = document.createTextNode(makredTextWithSiblings.p);
     const nextTextNode = makredTextWithSiblings.n
       ? document.createTextNode(makredTextWithSiblings.n)
-      : document.createTextNode("\u00A0");
+      : parentNode.nodeName === "P"
+      ? document.createTextNode("\u00A0")
+      : "";
 
     nodesFragment.append(
       prevTextNode,
@@ -400,7 +402,9 @@ export function replaceTextAndAddItalicElements(
     const prevTextNode = document.createTextNode(makredTextWithSiblings.p);
     const nextTextNode = makredTextWithSiblings.n
       ? document.createTextNode(makredTextWithSiblings.n)
-      : document.createTextNode("\u00A0");
+      : parentNode.nodeName === "P"
+      ? document.createTextNode("\u00A0")
+      : "";
 
     nodesFragment.append(
       prevTextNode,
@@ -505,6 +509,7 @@ export function updateInlineStyleState() {
       !isInlineMarkSpan(boldElement.nextSibling) ||
       (boldElement.nextSibling && boldElement.nextSibling.nodeName !== "SPAN")
     ) {
+      debugger;
       //add after span
       console.log("trigger missing tail marks");
       console.log("last", getCursorState().last);
@@ -690,9 +695,7 @@ export function isInlineMarkSpan(node) {
   }
 
   if (node.nodeName === "SPAN") {
-    return (
-      node.classList.contains("italic") || node.classList.contains("italic")
-    );
+    return node.classList.contains("italic") || node.classList.contains("bold");
   }
 }
 
