@@ -22,3 +22,11 @@ export function getBoldText(textWithMark) {
     return textWithMark.slice(2, -2);
   }
 }
+
+export function getItalicText(textWithMark) {
+  if (!textWithMark) {
+    console.log("no mark text captured");
+  } else {
+    return textWithMark.slice(1, -1);
+  }
+}

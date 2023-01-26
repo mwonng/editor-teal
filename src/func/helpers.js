@@ -6,6 +6,8 @@ import {
   boldInlineCapture,
   disableBoldInlineStyle,
   enableBoldInlineStyle,
+  isTextHadItalicMark,
+  italicInlineCapture,
 } from "./inlineHelpers";
 
 // bindings!!
@@ -26,7 +28,8 @@ function onInput(e) {
 
   if (e.data === "*" || e.data === null) {
     appendTextNode();
-    boldInlineCapture();
+    // boldInlineCapture();
+    italicInlineCapture();
   }
 
   return;

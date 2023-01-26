@@ -3,6 +3,7 @@ import {
   currentCursorNode,
   getElementNode,
   getBoldText,
+  getItalicText,
 } from "./eventHelpers";
 import { setCaretOffset, setNodeOffset } from "./utils";
 
@@ -99,7 +100,7 @@ export function disableBoldInlineStyle(e) {
   console.log("----", getElementNode());
   if (
     e.inputType === "deleteContentBackward" &&
-    getElementNode().classList.contains("bold")
+    isBoldMarkSpan(getElementNode())
   ) {
     debugger;
     const sel = window.getSelection();
@@ -158,6 +159,19 @@ export function isTextHadBoldMark(text) {
   console.log("text =>", textToBeBold, textToBeBold.length);
   return arr[0].groups;
 }
+export function isTextHadItalicMark(text) {
+  const regexp = /(?<p>.*)(?<m>\*.+\*)(?<n>.*)/g;
+  const arr = [...text.matchAll(regexp)];
+  if (!arr[0]) {
+    return false;
+  }
+
+  const textToItalic = arr[0].groups.m.slice(3, -3);
+
+  console.log("isTextHadItalic", arr[0].groups);
+  console.log("text =>", textToItalic, textToItalic.length);
+  return arr[0].groups;
+}
 
 export function handleInputInBoldBeforeFirstChar(e) {
   //TODO: if delete the first input it will go NULL?
@@ -213,6 +227,24 @@ export function boldInlineCapture() {
   return;
 }
 
+export function italicInlineCapture() {
+  const anchorText = currentCursorNode();
+  const anchorOffset = window.getSelection().anchorOffset;
+  const allText = isTextHadItalicMark(anchorText.textContent);
+
+  // if there is bold mark in anchorNode, starting replacing and add the style
+  if (allText) {
+    const parentNode = anchorText.parentNode;
+    let firstNode = replaceTextAndAddItalicElements(
+      parentNode,
+      anchorText,
+      allText
+    );
+    setCaretOffset(firstNode, anchorOffset);
+  }
+  return;
+}
+
 /**
  * this function replace the text with a styled fragments
  * @param {Node} parentNode the parent paragraph, usually p tag
@@ -227,14 +259,46 @@ export function replaceTextAndAddMarkElements(
 ) {
   if (makredTextWithSiblings) {
     const boldText = getBoldText(makredTextWithSiblings.m);
-    console.log("parent ele", parentNode);
-    console.log("replacing function", makredTextWithSiblings);
-
     const markSpanLeft = createMarkSpan("**");
     markSpanLeft.className = "bold show";
     const markSpanRight = createMarkSpan("**");
     markSpanRight.className = "bold show";
     const boldNode = document.createElement("B");
+    boldNode.innerText = boldText;
+    let nodesFragment = document.createDocumentFragment();
+    const prevTextNode = document.createTextNode(makredTextWithSiblings.p);
+    const nextTextNode = makredTextWithSiblings.n
+      ? document.createTextNode(makredTextWithSiblings.n)
+      : document.createTextNode("\u00A0");
+
+    nodesFragment.append(
+      prevTextNode,
+      markSpanLeft,
+      boldNode,
+      markSpanRight,
+      nextTextNode
+    );
+    console.log("nodesFragement", nodesFragment.childElementCount);
+    console.log(nodesFragment);
+    parentNode.replaceChild(nodesFragment, oldChildNode);
+    return prevTextNode;
+  } else {
+    return false;
+  }
+}
+
+export function replaceTextAndAddItalicElements(
+  parentNode,
+  oldChildNode,
+  makredTextWithSiblings
+) {
+  if (makredTextWithSiblings) {
+    const boldText = getItalicText(makredTextWithSiblings.m);
+    const markSpanLeft = createMarkSpan("*");
+    markSpanLeft.className = "italic show";
+    const markSpanRight = createMarkSpan("*");
+    markSpanRight.className = "italic show";
+    const boldNode = document.createElement("I");
     boldNode.innerText = boldText;
     let nodesFragment = document.createDocumentFragment();
     const prevTextNode = document.createTextNode(makredTextWithSiblings.p);
@@ -279,6 +343,10 @@ export function hideSiblingSpan(node) {
       child.classList.remove("show");
       child.classList.add("hide");
     }
+    if (isItalicMarkSpan(child)) {
+      child.classList.remove("show");
+      child.classList.add("hide");
+    }
   });
 }
 
@@ -313,9 +381,7 @@ export function updateInlineStyleState() {
   // this show marks span if your cursor/caret just before the bold
   // e.g. (I)**ab**
   if (
-    anchorNode.nextSibling &&
-    anchorNode.nextSibling.className &&
-    anchorNode.nextSibling.className.indexOf("bold") >= 0 &&
+    isInlineMarkSpan(anchorNode.nextSibling) &&
     anchorOffset === anchorNode.textContent.length
   ) {
     showPrevAndNextSiblingSpan(anchorNode.nextSibling.nextSibling);
@@ -324,8 +390,10 @@ export function updateInlineStyleState() {
 
   // if cursor in a bold node
   // note: before first letter might not be reckon inside b node
-  if (getCurrentCursorNodeName() === "B") {
-    debugger;
+  if (
+    getCurrentCursorNodeName() === "B" ||
+    getCurrentCursorNodeName() === "I"
+  ) {
     const boldElement = getElementNode();
     let anchorOffset = window.getSelection().anchorOffset;
     if (anchorOffset > 0 && anchorOffset < boldElement.innerText.length) {
@@ -334,31 +402,25 @@ export function updateInlineStyleState() {
     // if closing mark tag is missing - only should in chrome
     // e.g. ab**cd**ef, when you delete e, right ** will remove in chrome
     if (
-      !isBoldMarkSpan(boldElement.nextSibling) ||
-      boldElement.nextSibling.nodeName !== "SPAN"
+      !isInlineMarkSpan(boldElement.nextSibling) ||
+      (boldElement.nextSibling && boldElement.nextSibling.nodeName !== "SPAN")
     ) {
       //add after span
-      const nextBoldSpan = document.createElement("SPAN");
-      nextBoldSpan.innerText = "**";
-      nextBoldSpan.className = "bold show";
-      const range = document.createRange();
-      range.selectNode(boldElement.nextSibling);
-      range.insertNode(nextBoldSpan);
-      const sel = window.getSelection();
-      sel.setBaseAndExtent(
-        nextBoldSpan.nextSibling,
-        0,
-        nextBoldSpan.nextSibling,
-        0
-      );
+      const nextBoldSpan = initMarkSpan(boldElement.nodeName);
+      boldElement.after(nextBoldSpan);
+      if (!nextBoldSpan.nextSibling) {
+        nextBoldSpan.after(document.createTextNode("\u00A0"));
+      }
+      setNodeOffset(nextBoldSpan.nextSibling, 0);
     }
 
     anchorNode = window.getSelection().anchorNode;
     // **dccd**(I)text - when ** is hide and
+    console.log("???? ->", anchorNode);
     if (
       anchorOffset === anchorNode.textContent.length &&
       getElementNode().nextSibling.classList.contains("hide") &&
-      getElementNode().nextSibling.classList.contains("bold")
+      isInlineMarkSpan(getElementNode().nextSibling)
     ) {
       console.log("SOS", getCursorState().current, getCursorState().last);
       showPrevAndNextSiblingSpan();
@@ -398,7 +460,7 @@ export function updateInlineStyleState() {
   }
 
   anchorOffset = window.getSelection().anchorOffset;
-  // if it leave the bold and right after inline mark style
+  // hide marks if it leave the bold and right after inline mark style
   if (
     (getCurrentCursorNodeName() === "P" && anchorOffset !== 0) ||
     isParaChange()
@@ -434,4 +496,43 @@ export function isBoldMarkSpan(node) {
     return false;
   }
   return node.nodeName === "SPAN" && node.classList.contains("bold");
+}
+
+export function isItalicMarkSpan(node) {
+  if (!node) {
+    return false;
+  }
+  return node.nodeName === "SPAN" && node.classList.contains("italic");
+}
+
+export function isInlineMarkSpan(node) {
+  if (!node) {
+    return false;
+  }
+
+  if (node.nodeName === "SPAN") {
+    return (
+      node.classList.contains("italic") || node.classList.contains("italic")
+    );
+  }
+}
+
+export function isInlineStyleIntegral(inlineStyleNode) {
+  return (
+    isInlineMarkSpan(inlineStyleNode.previousSibling) &&
+    isInlineMarkSpan(inlineStyleNode.previousSibling)
+  );
+}
+
+export function initMarkSpan(tag) {
+  const markSpan = document.createElement("SPAN");
+  if (tag === "I") {
+    markSpan.innerText = "*";
+    markSpan.className = "italic show";
+  }
+  if (tag === "B") {
+    markSpan.innerText = "**";
+    markSpan.className = "bold show";
+  }
+  return markSpan;
 }
