@@ -308,7 +308,6 @@ export function boldInlineCapture() {
   const anchorText = currentCursorNode();
   const anchorOffset = window.getSelection().anchorOffset;
   const allText = isTextHadBoldMark(anchorText.textContent);
-
   // if there is bold mark in anchorNode, starting replacing and add the style
   if (allText) {
     const parentNode = anchorText.parentNode;
@@ -362,6 +361,8 @@ export function replaceTextAndAddMarkElements(
     const boldNode = document.createElement("B");
     boldNode.innerText = boldText;
     let nodesFragment = document.createDocumentFragment();
+    const inlineSpan = document.createElement("SPAN");
+    inlineSpan.append(markSpanLeft, boldNode, markSpanRight);
     const prevTextNode = document.createTextNode(makredTextWithSiblings.p);
     const nextTextNode = makredTextWithSiblings.n
       ? document.createTextNode(makredTextWithSiblings.n)
@@ -369,13 +370,7 @@ export function replaceTextAndAddMarkElements(
       ? document.createTextNode("\u00A0")
       : "";
 
-    nodesFragment.append(
-      prevTextNode,
-      markSpanLeft,
-      boldNode,
-      markSpanRight,
-      nextTextNode
-    );
+    nodesFragment.append(prevTextNode, inlineSpan, nextTextNode);
     console.log("nodesFragement", nodesFragment.childElementCount);
     console.log(nodesFragment);
     parentNode.replaceChild(nodesFragment, oldChildNode);

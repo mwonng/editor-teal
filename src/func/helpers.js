@@ -45,11 +45,11 @@ function onInput(e) {
       boldInlineCapture();
       // return;
     }
-    if (getElementNode().nodeName !== "I") {
-      console.log("capture ITA");
-      italicInlineCapture();
-      // return;
-    }
+    // if (getElementNode().nodeName !== "I") {
+    //   console.log("capture ITA");
+    //   italicInlineCapture();
+    //   // return;
+    // }
   }
 
   return;

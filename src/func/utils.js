@@ -29,6 +29,9 @@ export function setCaretOffset(firstNode, offset) {
   while (currentFragment && restOffset > nodeSize(currentFragment)) {
     restOffset = restOffset - nodeSize(currentFragment);
     currentFragment = currentFragment.nextSibling;
+    if (currentFragment && currentFragment.childNodes.length > 1) {
+      currentFragment = currentFragment.firstChild;
+    }
   }
 
   setNodeOffset(currentFragment, restOffset);
