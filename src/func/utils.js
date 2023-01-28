@@ -51,3 +51,11 @@ export function setNodeOffset(node, offset) {
   const sel = window.getSelection();
   sel.setBaseAndExtent(currNode, offset, currNode, offset);
 }
+
+export function getNodeIndexOfChild(parent, child) {
+  const index = Array.prototype.findIndex.call(
+    parent.childNodes,
+    (c) => c === child
+  );
+  return index;
+}
