@@ -5,7 +5,12 @@ import {
   getBoldText,
   getItalicText,
 } from "./eventHelpers";
-import { setCaretOffset, setNodeOffset } from "./utils";
+import {
+  setCaretOffset,
+  setNodeOffset,
+  getNodeIndexOfChild,
+  hasParentClass,
+} from "./utils";
 
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 let cursorAtLastElement, cursorAtCurrentElement;
@@ -218,17 +223,20 @@ export function disableItalicInlineStyle(e) {
  */
 
 export function isTextHadBoldMark(text) {
-  const regexp = /(?<p>.*)(?<m>\*\*.+\*\*)(?<n>.*)/g;
+  // const regexp = /(?<p>.*)(?<m>\*\*.+\*\*)(?<n>.*)/g;
+  const regexp = /\*{2}((?=[^\s\*<]).*?[^\s\*>])\*{2}/g;
+
   const arr = [...text.matchAll(regexp)];
+  console.log("test result", arr);
   if (!arr[0]) {
     return false;
   }
+  console.log(arr[0][1]);
+  return arr[0][1];
 
-  const textToBeBold = arr[0].groups.m.slice(3, -3);
-
-  console.log("isTextHadBold", arr[0].groups);
-  console.log("text =>", textToBeBold, textToBeBold.length);
-  return arr[0].groups;
+  // console.log("isTextHadBold", arr[0].groups);
+  // console.log("text =>", textToBeBold, textToBeBold.length);
+  // return arr[0].groups;
 }
 export function isTextHadItalicMark(text) {
   const regexp = /(?<p>.*)(?<m>\*.+\*)(?<n>.*)/g;
@@ -305,18 +313,30 @@ export function getCurrentParaNode() {
  * @returns {void}
  */
 export function boldInlineCapture() {
-  const anchorText = currentCursorNode();
+  const anchorTextNode = currentCursorNode();
   const anchorOffset = window.getSelection().anchorOffset;
-  const allText = isTextHadBoldMark(anchorText.textContent);
+  const allText = isTextHadBoldMark(getCurrentParaNode().innerHTML);
+
   // if there is bold mark in anchorNode, starting replacing and add the style
   if (allText) {
-    const parentNode = anchorText.parentNode;
-    let firstNode = replaceTextAndAddMarkElements(
-      parentNode,
-      anchorText,
-      allText
-    );
-    setCaretOffset(firstNode, anchorOffset);
+    const parentNode = getElementNode();
+    const childIndex = getNodeIndexOfChild(parentNode, anchorTextNode);
+
+    let offset = 0;
+    for (let i = 0; i < childIndex; i++) {
+      const childrenNodes = parentNode.childNodes;
+      if (childrenNodes.item(i).nodeType === 3) {
+        offset += childrenNodes.item(i).textContent.length;
+      } else {
+        offset += childrenNodes.item(i).innerText.length;
+      }
+    }
+    offset += anchorOffset;
+    debugger;
+    console.log("actual position is =>", offset);
+    replaceTextAndAddMarkElements(parentNode, allText, anchorTextNode);
+    debugger;
+    setCaretOffset(parentNode.firstChild, offset);
     return true;
   }
   return false;
@@ -347,37 +367,16 @@ export function italicInlineCapture() {
  * @param {object} makredTextWithSiblings, it including, p, m, n as keys to present the wholeText
  * @returns {firstNode} it return first node in the styled fragment, ususally text before the left marks
  */
-export function replaceTextAndAddMarkElements(
-  parentNode,
-  oldChildNode,
-  makredTextWithSiblings
-) {
-  if (makredTextWithSiblings) {
-    const boldText = getBoldText(makredTextWithSiblings.m);
-    const markSpanLeft = createMarkSpan("**");
-    markSpanLeft.className = "bold show";
-    const markSpanRight = createMarkSpan("**");
-    markSpanRight.className = "bold show";
-    const boldNode = document.createElement("B");
-    boldNode.innerText = boldText;
-    let nodesFragment = document.createDocumentFragment();
-    const inlineSpan = document.createElement("SPAN");
-    inlineSpan.append(markSpanLeft, boldNode, markSpanRight);
-    const prevTextNode = document.createTextNode(makredTextWithSiblings.p);
-    const nextTextNode = makredTextWithSiblings.n
-      ? document.createTextNode(makredTextWithSiblings.n)
-      : parentNode.nodeName === "P"
-      ? document.createTextNode("\u00A0")
-      : "";
-
-    nodesFragment.append(prevTextNode, inlineSpan, nextTextNode);
-    console.log("nodesFragement", nodesFragment.childElementCount);
-    console.log(nodesFragment);
-    parentNode.replaceChild(nodesFragment, oldChildNode);
-    return prevTextNode;
-  } else {
-    return false;
-  }
+export function replaceTextAndAddMarkElements(anchorParentNode, text) {
+  const prefixHTML =
+    '<span class="inline-md-bold marks-expend"><span class="bold-mark">**</span><strong>';
+  const suffixHTML = '</strong><span class="bold-mark">**</span></span>';
+  const newText = prefixHTML + text + suffixHTML;
+  anchorParentNode.innerHTML = anchorParentNode.innerHTML.replace(
+    `**${text}**`,
+    newText
+  );
+  console.log("curr para", anchorParentNode);
 }
 
 export function replaceTextAndAddItalicElements(
@@ -478,7 +477,18 @@ export function inputEndOfMarkSpan() {}
 export function updateInlineStyleState() {
   let anchorNode = window.getSelection().anchorNode;
   let anchorOffset = window.getSelection().anchorOffset;
+  let currParagraphNode = getCurrentParaNode();
+  //
+  console.log("hasParentClass", hasParentClass("inline-md-bold"));
 
+  if (hasParentClass("inline-md-bold")) {
+    const parent = hasParentClass("inline-md-bold");
+    parent.classList.add("marks-expend");
+  } else if (currParagraphNode.querySelectorAll(".inline-md-bold").length > 0) {
+    currParagraphNode.querySelectorAll(".inline-md-bold").forEach((e) => {
+      e.classList.remove("marks-expend");
+    });
+  }
   // this show marks span if your cursor/caret just before the bold
   // e.g. (I)**ab**
   if (

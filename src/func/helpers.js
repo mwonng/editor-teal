@@ -13,7 +13,7 @@ import {
   setAndUpdateCursorNodeState,
   updateInlineStyleState,
 } from "./inlineHelpers";
-
+import { nodeSize } from "./utils";
 // bindings!!
 export function bindingListeners(node) {
   let allListeners = [
@@ -37,10 +37,15 @@ function onInput(e) {
   }
 
   if (e.data === "*" || e.data === null) {
-    let anchorText = window.getSelection().anchorNode;
     appendTextNode();
-
+    let anchorText = window.getSelection().anchorNode;
+    let anchorOffset = window.getSelection().anchorOffset;
+    anchorText.splitText(anchorOffset);
+    let charLength = 0;
+    getElementNode().childNodes.forEach((e) => (charLength += nodeSize(e)));
     console.log("-->>>", getElementNode().nodeName);
+    console.log("how many child nodes? =>", getElementNode().childNodes.length);
+    console.log("charLength? =>", charLength);
     if (getElementNode().nodeName !== "B") {
       boldInlineCapture();
       // return;

@@ -16,6 +16,10 @@ p {
   padding: 5px;
 }
 
+.inline-md-bold {
+  font-weight: bold;
+}
+
 .bold {
   font-weight: bold;
 }
@@ -24,11 +28,18 @@ p {
   font-style: italic;
 }
 
-.hide {
-  display: none;
+.inline-md-bold span.bold-mark {
+  height: 0;
+  width: 0;
+  display: inline-block;
+  overflow: hidden;
+  transition: all 0.15s ease-in-out;
 }
 
-.show {
+.marks-expend span.bold-mark {
+  color: palevioletred;
+  height: auto;
+  width: auto;
   display: inline;
 }
 

@@ -1,3 +1,5 @@
+import { getElementNode } from "./eventHelpers";
+
 export function addNewParagraph(text) {
   const editorRoot = getEditorElement();
   const newParagraph = document.createElement("p");
@@ -28,7 +30,8 @@ export function setCaretOffset(firstNode, offset) {
 
   while (currentFragment && restOffset > nodeSize(currentFragment)) {
     restOffset = restOffset - nodeSize(currentFragment);
-    currentFragment = currentFragment.nextSibling;
+    currentFragment =
+      currentFragment.nextSibling || currentFragment.parentNode.nextSibling;
     if (currentFragment && currentFragment.childNodes.length > 1) {
       currentFragment = currentFragment.firstChild;
     }
@@ -61,4 +64,17 @@ export function getNodeIndexOfChild(parent, child) {
     (c) => c === child
   );
   return index;
+}
+
+export function hasParentClass(className) {
+  let currentNode = getElementNode();
+
+  while (currentNode && currentNode.nodeType !== "P") {
+    if (currentNode.classList && currentNode.classList.contains(className)) {
+      return currentNode;
+    }
+    currentNode = currentNode.parentNode;
+  }
+
+  return false;
 }
