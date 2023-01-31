@@ -58,7 +58,7 @@ export function monitorTailInput(e) {
 export function isTextHadBoldMark(text) {
   // const regexp = /(?<p>.*)(?<m>\*\*.+\*\*)(?<n>.*)/g;
   const regexp =
-    /(?<p>\*(?:\<wbr.*>)?\*)(?<m>(?=[^\s\*]).*?[^\s\*>])(?<n>\*(?:\<wbr.*>)?\*)/g;
+    /(?<p>\*(?:\<wbr.*>)?\*)(?<m>(?=[^\s\*<]).*?[^\s\*>])(?<n>\*(?:\<wbr.*>)?\*)/g;
 
   const arr = [...text.matchAll(regexp)];
   console.log("test result", arr);
@@ -167,7 +167,6 @@ export function updateInlineStyleState() {
     const neighbor = hasClassPreviousSibling("inline-md-bold");
     neighbor.classList.add("marks-expend");
   } else if (currParagraphNode.querySelectorAll(".inline-md-bold").length > 0) {
-    // debugger;
     currParagraphNode.querySelectorAll(".inline-md-bold").forEach((e) => {
       e.classList.remove("marks-expend");
     });
