@@ -17,6 +17,30 @@ import {
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 let cursorAtLastElement, cursorAtCurrentElement;
 
+export function monitorTailInput(e) {
+  const anchorNode = window.getSelection().anchorNode;
+  const anchorOffset = window.getSelection().anchorOffset;
+  const anchorElement = getElementNode();
+  const inlineParentContainer = hasParentClass("marks-expend");
+  if (
+    anchorOffset === 3 &&
+    inlineParentContainer &&
+    anchorElement.nodeName !== "STRONG"
+  ) {
+    const inputChar = e.data;
+    anchorNode.textContent = anchorNode.textContent.slice(0, 2);
+    let adjustElement;
+    if (anchorElement.nextSibling) {
+      adjustElement = anchorElement.nextSibling.firstChild;
+      adjustElement.before(inputChar);
+    } else {
+      adjustElement = inlineParentContainer.nextSibling;
+      adjustElement.before(inputChar);
+    }
+    setCaretOffset(adjustElement, 0);
+  }
+}
+
 /**
  * test if text has matched bold marks in the text
  * @param {string} text full text from the node to be text regex, usually textContent from textNode
@@ -127,7 +151,6 @@ export function updateInlineStyleState() {
   let anchorNode = window.getSelection().anchorNode;
   let anchorOffset = window.getSelection().anchorOffset;
   let currParagraphNode = getCurrentParaNode();
-  debugger;
   if (hasParentClass("inline-md-bold")) {
     const parent = hasParentClass("inline-md-bold");
     parent.classList.add("marks-expend");
@@ -168,4 +191,11 @@ export function removeMarkExpendFromNode() {
   if (inlineMarkdownContainer) {
     inlineMarkdownContainer.classList.remove("marks-expend");
   }
+}
+
+export function isBoldMarkSpan(node) {
+  if (node && node.classList && node.classList.contains("bold-mark")) {
+    return true;
+  }
+  return false;
 }

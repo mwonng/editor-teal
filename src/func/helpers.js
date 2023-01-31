@@ -1,14 +1,7 @@
 import { getElementNode } from "./eventHelpers";
 import {
-  appendTextNode,
   boldInlineCapture,
-  disableBoldInlineStyle,
-  disableItalicInlineStyle,
-  enableBoldInlineStyle,
-  enableItalicInlineStyle,
-  isTextHadBoldMark,
-  isTextHadItalicMark,
-  italicInlineCapture,
+  monitorTailInput,
   onSelectionChange,
   setAndUpdateCursorNodeState,
   updateInlineStyleState,
@@ -49,6 +42,7 @@ function onInput(e) {
     const caretWbr = document.querySelector("#caret-wbr");
     caretWbr.remove();
   }
+  monitorTailInput(e);
 
   return;
 }

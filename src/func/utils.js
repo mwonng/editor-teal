@@ -82,14 +82,14 @@ export function hasParentClass(className, node) {
 
 export function hasClassNextSibling(className) {
   let anchorNode = window.getSelection().anchorNode;
-  if (!anchorNode.nextSibling) {
+  if (!anchorNode.nextElementSibling) {
     return false;
   }
   if (
-    anchorNode.nextSibling.classList &&
-    anchorNode.nextSibling.classList.contains(className)
+    anchorNode.nextElementSibling.classList &&
+    anchorNode.nextElementSibling.classList.contains(className)
   ) {
-    return anchorNode.nextSibling;
+    return anchorNode.nextElementSibling;
   }
   return false;
 }
