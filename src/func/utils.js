@@ -1,4 +1,5 @@
 import { getElementNode } from "./eventHelpers";
+import { getCurrentCursorNodeName } from "./inlineHelpers";
 
 export function addNewParagraph(text) {
   const editorRoot = getEditorElement();
@@ -66,8 +67,8 @@ export function getNodeIndexOfChild(parent, child) {
   return index;
 }
 
-export function hasParentClass(className) {
-  let currentNode = getElementNode();
+export function hasParentClass(className, node) {
+  let currentNode = node || getElementNode();
 
   while (currentNode && currentNode.nodeType !== "P") {
     if (currentNode.classList && currentNode.classList.contains(className)) {
@@ -76,5 +77,33 @@ export function hasParentClass(className) {
     currentNode = currentNode.parentNode;
   }
 
+  return false;
+}
+
+export function hasClassNextSibling(className) {
+  let anchorNode = window.getSelection().anchorNode;
+  if (!anchorNode.nextSibling) {
+    return false;
+  }
+  if (
+    anchorNode.nextSibling.classList &&
+    anchorNode.nextSibling.classList.contains(className)
+  ) {
+    return anchorNode.nextSibling;
+  }
+  return false;
+}
+
+export function hasClassPreviousSibling(className) {
+  let anchorNode = window.getSelection().anchorNode;
+  if (!anchorNode.previousSibling) {
+    return false;
+  }
+  if (
+    anchorNode.previousSibling.classList &&
+    anchorNode.previousSibling.classList.contains(className)
+  ) {
+    return anchorNode.previousSibling;
+  }
   return false;
 }

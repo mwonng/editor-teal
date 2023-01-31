@@ -27,34 +27,27 @@ export function bindingListeners(node) {
 }
 
 function onInput(e) {
-  enableBoldInlineStyle(e);
-  disableBoldInlineStyle(e);
-  enableItalicInlineStyle(e);
-  disableItalicInlineStyle(e);
   if (e.inputType === "deleteContentBackward") {
     console.log("backspace!!!", e.cancelable);
     e.preventDefault();
   }
+  if (e.inputType === "insertParagraph") {
+    return;
+  }
 
   if (e.data === "*" || e.data === null) {
-    appendTextNode();
     let anchorText = window.getSelection().anchorNode;
     let anchorOffset = window.getSelection().anchorOffset;
     anchorText.splitText(anchorOffset);
-    let charLength = 0;
-    getElementNode().childNodes.forEach((e) => (charLength += nodeSize(e)));
-    console.log("-->>>", getElementNode().nodeName);
-    console.log("how many child nodes? =>", getElementNode().childNodes.length);
-    console.log("charLength? =>", charLength);
+    const wbr = document.createElement("wbr");
+    wbr.id = "caret-wbr";
+    anchorText.after(wbr);
     if (getElementNode().nodeName !== "B") {
       boldInlineCapture();
       // return;
     }
-    // if (getElementNode().nodeName !== "I") {
-    //   console.log("capture ITA");
-    //   italicInlineCapture();
-    //   // return;
-    // }
+    const caretWbr = document.querySelector("#caret-wbr");
+    caretWbr.remove();
   }
 
   return;
