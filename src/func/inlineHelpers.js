@@ -56,9 +56,10 @@ export function monitorTailInput(e) {
  */
 
 export function isTextHadBoldMark(text) {
+  debugger;
   // const regexp = /(?<p>.*)(?<m>\*\*.+\*\*)(?<n>.*)/g;
   const regexp =
-    /(?<p>\*(?:\<wbr.*>)?\*)(?<m>(?=[^\s\*<]).*?[^\s\*>])(?<n>\*(?:\<wbr.*>)?\*)/g;
+    /(?<p>\*(?:\<wbr.*)?\*)(?<m>(?=[^\s\*])(?!<\/span>).*?[^\s\*])(?<n>\*(?:\<wbr.*)?\*)/g;
 
   const arr = [...text.matchAll(regexp)];
   console.log("test result", arr);
