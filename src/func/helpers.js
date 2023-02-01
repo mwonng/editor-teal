@@ -5,6 +5,7 @@ import {
   onSelectionChange,
   setAndUpdateCursorNodeState,
   updateInlineStyleState,
+  monitorBoldStyle,
 } from "./inlineHelpers";
 import { nodeSize } from "./utils";
 // bindings!!
@@ -20,10 +21,6 @@ export function bindingListeners(node) {
 }
 
 function onInput(e) {
-  if (e.inputType === "deleteContentBackward") {
-    console.log("backspace!!!", e.cancelable);
-    e.preventDefault();
-  }
   if (e.inputType === "insertParagraph") {
     return;
   }
@@ -42,6 +39,7 @@ function onInput(e) {
     const caretWbr = document.querySelector("#caret-wbr");
     caretWbr.remove();
   }
+  monitorBoldStyle(e);
   monitorTailInput(e);
 
   return;

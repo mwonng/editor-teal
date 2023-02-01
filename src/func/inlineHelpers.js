@@ -13,7 +13,7 @@ import {
   hasClassNextSibling,
   hasClassPreviousSibling,
 } from "./utils";
-
+import { BOLD_CONTAINER_CLASSNAME, REGEX_INNER_TEXT_BOLD } from "./const";
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 let cursorAtLastElement, cursorAtCurrentElement;
 
@@ -41,6 +41,43 @@ export function monitorTailInput(e) {
   }
 }
 
+export function monitorBoldStyle(e) {
+  if (
+    e.inputType === "deleteContentBackward" ||
+    e.inputType === "deleteContentForward"
+  ) {
+    if (hasParentClass(BOLD_CONTAINER_CLASSNAME)) {
+      let anchorText = window.getSelection().anchorNode;
+      const wbr = document.createElement("wbr");
+      wbr.id = "caret-wbr";
+      anchorText.after(wbr);
+      const boldContainer = hasParentClass(BOLD_CONTAINER_CLASSNAME);
+      const innerText = boldContainer.innerText;
+      const innerHTML = boldContainer.innerHTML;
+      const afterFilter = innerHTML.replace(/<((?!wbr)[^>]+)>/g, "");
+      const afterFilterIndex = afterFilter.indexOf("<wbr");
+      console.log("afterFilter", afterFilter, afterFilterIndex);
+      const arr = [...innerText.matchAll(REGEX_INNER_TEXT_BOLD)];
+      if (!arr[0]) {
+        console.log("not matched");
+        let textNode = document.createTextNode(innerText);
+        boldContainer.parentNode.replaceChild(textNode, boldContainer);
+        setCaretOffset(textNode, afterFilterIndex);
+      }
+    } else if (hasClassNextSibling(BOLD_CONTAINER_CLASSNAME)) {
+      debugger;
+      const boldContainer = hasClassNextSibling(BOLD_CONTAINER_CLASSNAME);
+      const innerText = boldContainer.innerText;
+      const arr = [...innerText.matchAll(REGEX_INNER_TEXT_BOLD)];
+      if (!arr[0]) {
+        let textNode = document.createTextNode(innerText);
+        boldContainer.parentNode.replaceChild(textNode, boldContainer);
+        setCaretOffset(textNode, 0);
+      }
+    }
+  }
+}
+
 /**
  * test if text has matched bold marks in the text
  * @param {string} text full text from the node to be text regex, usually textContent from textNode
@@ -56,7 +93,6 @@ export function monitorTailInput(e) {
  */
 
 export function isTextHadBoldMark(text) {
-  debugger;
   // const regexp = /(?<p>.*)(?<m>\*\*.+\*\*)(?<n>.*)/g;
   const regexp =
     /(?<p>\*(?:\<wbr.*)?\*)(?<m>(?=[^\s\*])(?!<\/span>).*?[^\s\*])(?<n>\*(?:\<wbr.*)?\*)/g;
