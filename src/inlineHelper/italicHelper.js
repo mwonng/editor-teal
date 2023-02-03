@@ -1,24 +1,16 @@
-import {
-  createMarkSpan,
-  currentCursorNode,
-  getElementNode,
-  getBoldText,
-  getItalicText,
-} from "./eventHelpers";
+import { getElementNode } from "../func/eventHelpers";
 import {
   setCaretOffset,
-  setNodeOffset,
-  getNodeIndexOfChild,
   hasParentClass,
   hasClassNextSibling,
   hasClassPreviousSibling,
-} from "./utils";
+} from "./func/utils";
 import {
   BOLD_CONTAINER_CLASSNAME,
   REGEX_INNER_TEXT_BOLD,
   ITALIC_CONTAINER_CLASSNAME,
   REGEX_INNER_TEXT_ITALIC,
-} from "./const";
+} from "./func/const";
 
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 let cursorAtLastElement, cursorAtCurrentElement;

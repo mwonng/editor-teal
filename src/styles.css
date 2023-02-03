@@ -20,6 +20,10 @@ p {
   font-weight: bold;
 }
 
+.inline-md-italic {
+  font-style: italic;
+}
+
 .bold {
   font-weight: bold;
 }
@@ -28,7 +32,8 @@ p {
   font-style: italic;
 }
 
-.inline-md-bold span.bold-mark {
+.inline-md-bold span.bold-mark,
+.inline-md-italic span.italic-mark {
   height: 0;
   width: 0;
   display: inline-block;
@@ -36,7 +41,8 @@ p {
   transition: all 0.15s ease-in-out;
 }
 
-.marks-expend span.bold-mark {
+.marks-expend span.bold-mark,
+.marks-expend span.italic-mark {
   color: palevioletred;
   height: auto;
   width: auto;

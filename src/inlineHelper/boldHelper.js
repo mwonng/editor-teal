@@ -1,24 +1,16 @@
-import {
-  createMarkSpan,
-  currentCursorNode,
-  getElementNode,
-  getBoldText,
-  getItalicText,
-} from "./eventHelpers";
+import { getElementNode } from "../func/eventHelpers";
 import {
   setCaretOffset,
-  setNodeOffset,
-  getNodeIndexOfChild,
   hasParentClass,
   hasClassNextSibling,
   hasClassPreviousSibling,
-} from "./utils";
+} from "./func/utils";
 import {
   BOLD_CONTAINER_CLASSNAME,
   REGEX_INNER_TEXT_BOLD,
   ITALIC_CONTAINER_CLASSNAME,
   REGEX_INNER_TEXT_ITALIC,
-} from "./const";
+} from "./func/const";
 
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 let cursorAtLastElement, cursorAtCurrentElement;
@@ -36,30 +28,6 @@ export function monitorBoldTailInput(e) {
   ) {
     const inputChar = e.data;
     anchorNode.textContent = anchorNode.textContent.slice(0, 2);
-    let adjustElement;
-    if (anchorElement.nextSibling) {
-      adjustElement = anchorElement.nextSibling.firstChild;
-      adjustElement.before(inputChar);
-    } else {
-      adjustElement = inlineParentContainer.nextSibling;
-      adjustElement.before(inputChar);
-    }
-    setCaretOffset(adjustElement, 0);
-  }
-}
-
-export function monitorItalicTailInput(e) {
-  const anchorNode = window.getSelection().anchorNode;
-  const anchorOffset = window.getSelection().anchorOffset;
-  const anchorElement = getElementNode();
-  const inlineParentContainer = hasParentClass("marks-expend");
-  if (
-    anchorOffset === 2 &&
-    inlineParentContainer &&
-    anchorElement.nodeName !== "EM"
-  ) {
-    const inputChar = e.data;
-    anchorNode.textContent = anchorNode.textContent.slice(0, 1);
     let adjustElement;
     if (anchorElement.nextSibling) {
       adjustElement = anchorElement.nextSibling.firstChild;
@@ -108,44 +76,6 @@ export function removeInlineBold(e) {
   }
 }
 
-export function removeInlineItalic(e) {
-  if (
-    e.inputType === "deleteContentBackward" ||
-    e.inputType === "deleteContentForward"
-  ) {
-    if (hasParentClass(ITALIC_CONTAINER_CLASSNAME)) {
-      let anchorText = window.getSelection().anchorNode;
-      const wbr = document.createElement("wbr");
-      wbr.id = "caret-wbr";
-      anchorText.after(wbr);
-
-      const italicContainer = hasParentClass(ITALIC_CONTAINER_CLASSNAME);
-      const innerText = italicContainer.innerText;
-      const innerHTML = italicContainer.innerHTML;
-      const afterFilter = innerHTML.replace(/<((?!wbr)[^>]+)>/g, "");
-      const afterFilterIndex = afterFilter.indexOf("<wbr");
-      const arr = [...innerText.matchAll(REGEX_INNER_TEXT_ITALIC)];
-
-      if (!arr[0]) {
-        console.log("not matched");
-        let textNode = document.createTextNode(innerText);
-        italicContainer.parentNode.replaceChild(textNode, italicContainer);
-        setCaretOffset(textNode, afterFilterIndex);
-      }
-    } else if (hasClassNextSibling(ITALIC_CONTAINER_CLASSNAME)) {
-      const italicContainer = hasClassNextSibling(ITALIC_CONTAINER_CLASSNAME);
-      const innerText = italicContainer.innerText;
-      const arr = [...innerText.matchAll(REGEX_INNER_TEXT_ITALIC)];
-
-      if (!arr[0]) {
-        let textNode = document.createTextNode(innerText);
-        italicContainer.parentNode.replaceChild(textNode, italicContainer);
-        setCaretOffset(textNode, 0);
-      }
-    }
-  }
-}
-
 /**
  * test if text has matched bold marks in the text
  * @param {string} text full text from the node to be text regex, usually textContent from textNode
@@ -160,19 +90,6 @@ export function removeInlineItalic(e) {
  * n: next text after bold mark
  * k: the string with marks
  */
-export function isTextHaddItalicMark(text) {
-  const regexp =
-    /(?<p>[\*\_]{1})(?<m>(?=[^\s\*\_<])(?!<\/span>).*?[^\s\*\_>])(?<n>[\*\_]{1})/g;
-
-  const arr = [...text.matchAll(regexp)];
-  console.log("test result", arr);
-  if (!arr[0]) {
-    return false;
-  }
-  console.log(arr[0][1]);
-  return { ...arr[0].groups, k: arr[0][0] };
-}
-
 export function isTextHadBoldMark(text) {
   // const regexp = /(?<p>.*)(?<m>\*\*.+\*\*)(?<n>.*)/g;
   const regexp =
@@ -187,30 +104,6 @@ export function isTextHadBoldMark(text) {
   return { ...arr[0].groups, k: arr[0][0] };
 }
 
-export function getCurrentParaNode() {
-  let currentNode = window.getSelection().anchorNode;
-  while (currentNode.nodeName !== "P") {
-    currentNode = currentNode.parentNode;
-  }
-  return currentNode;
-}
-
-export function initializeInlineItalic() {
-  const allText = isTextHaddItalicMark(getCurrentParaNode().innerHTML);
-  if (allText) {
-    const parentNode = getElementNode();
-    const getMatchedGroups = isTextHaddItalicMark(
-      getCurrentParaNode().innerHTML
-    );
-    replaceTextAndAddItalicElements(parentNode, getMatchedGroups);
-    const caretWbr = document.querySelector("#caret-wbr");
-    setCaretOffset(caretWbr.nextSibling, 0);
-    resetItalicPrefix();
-    return true;
-  }
-  return false;
-}
-
 export function initializeInlineBold() {
   const allText = isTextHadBoldMark(getCurrentParaNode().innerHTML);
   if (allText) {
@@ -223,19 +116,6 @@ export function initializeInlineBold() {
     return true;
   }
   return false;
-}
-
-export function replaceTextAndAddItalicElements(
-  anchorParentNode,
-  matchedGroups
-) {
-  const prefixHTML = `<span class="inline-md-italic marks-expend"><span class="italic-mark">${matchedGroups.p}</span><em>`;
-  const suffixHTML = `</em><span class="italic-mark">${matchedGroups.n}</span></span>`;
-  const newText = prefixHTML + matchedGroups.m + suffixHTML;
-  anchorParentNode.innerHTML = anchorParentNode.innerHTML.replace(
-    matchedGroups.k,
-    newText
-  );
 }
 
 /**
@@ -253,33 +133,6 @@ export function replaceTextAndAddMarkElements(anchorParentNode, matchedGroups) {
     newText
   );
 }
-
-export function setAndUpdateCursorNodeState() {
-  console.log("cursor will update");
-  const anchorElement = getElementNode();
-  const anchorNode = window.getSelection().anchorNode;
-  const anchorOffset = window.getSelection().anchorOffset;
-  const currentCursorNode =
-    anchorElement.nodeName !== "P" ? anchorElement.parentNode : anchorElement;
-  cursorAtLastParaNode = cursorAtCurrentParaNode;
-  cursorAtCurrentParaNode = currentCursorNode;
-  cursorAtLastElement = cursorAtCurrentElement;
-  cursorAtCurrentElement = anchorNode;
-}
-
-export function getCursorState() {
-  return {
-    current: cursorAtCurrentParaNode,
-    last: cursorAtLastParaNode,
-    cursorElement: cursorAtCurrentElement,
-    lastElement: cursorAtLastElement,
-  };
-}
-
-/**
- * deal if input end position of mark span tag
- */
-export function inputEndOfMarkSpan() {}
 
 export function updateInlineStyleState() {
   let anchorNode = window.getSelection().anchorNode;

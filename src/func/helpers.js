@@ -1,13 +1,20 @@
 import { getElementNode } from "./eventHelpers";
 import {
-  boldInlineCapture,
-  monitorTailInput,
+  getInlinePrefix,
+  initializeInlineBold,
+  initializeInlineItalic,
+  monitorBoldTailInput,
+  monitorItalicTailInput,
+  monitorPrefix,
   onSelectionChange,
+  removeInlineBold,
+  removeInlineItalic,
+  resetBoldPrefix,
+  resetItalicPrefix,
   setAndUpdateCursorNodeState,
   updateInlineStyleState,
-  monitorBoldStyle,
 } from "./inlineHelpers";
-import { nodeSize } from "./utils";
+
 // bindings!!
 export function bindingListeners(node) {
   let allListeners = [
@@ -21,26 +28,54 @@ export function bindingListeners(node) {
 }
 
 function onInput(e) {
+  console.log(e);
   if (e.inputType === "insertParagraph") {
     return;
   }
 
-  if (e.data === "*" || e.data === null) {
+  if (e.data === "*" || e.data == null) {
+    monitorPrefix(e);
     let anchorText = window.getSelection().anchorNode;
     let anchorOffset = window.getSelection().anchorOffset;
+
     anchorText.splitText(anchorOffset);
     const wbr = document.createElement("wbr");
     wbr.id = "caret-wbr";
     anchorText.after(wbr);
-    if (getElementNode().nodeName !== "B") {
-      boldInlineCapture();
-      // return;
+
+    if (getElementNode().nodeName !== "B" && getInlinePrefix().bold) {
+      initializeInlineBold();
     }
+
+    if (getElementNode().nodeName !== "I" && getInlinePrefix().italic) {
+      initializeInlineItalic();
+    }
+
     const caretWbr = document.querySelector("#caret-wbr");
     caretWbr.remove();
   }
-  monitorBoldStyle(e);
-  monitorTailInput(e);
+
+  if (e.data === "_" || e.data === null || e.data === " ") {
+    let anchorText = window.getSelection().anchorNode;
+    let anchorOffset = window.getSelection().anchorOffset;
+
+    anchorText.splitText(anchorOffset);
+    const wbr = document.createElement("wbr");
+    wbr.id = "caret-wbr";
+    anchorText.after(wbr);
+
+    if (getElementNode().nodeName !== "I") {
+      initializeInlineItalic();
+    }
+    const caretWbr = document.querySelector("#caret-wbr");
+    caretWbr.remove();
+    resetItalicPrefix();
+  }
+
+  removeInlineBold(e);
+  removeInlineItalic(e);
+  monitorBoldTailInput(e);
+  monitorItalicTailInput(e);
 
   return;
 }
