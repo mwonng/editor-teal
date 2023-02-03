@@ -1,20 +1,12 @@
-import { getElementNode } from "../func/eventHelpers";
 import {
-  setCaretOffset,
-  hasParentClass,
+  getElementNode,
   hasClassNextSibling,
   hasClassPreviousSibling,
-} from "./func/utils";
-import {
-  BOLD_CONTAINER_CLASSNAME,
-  REGEX_INNER_TEXT_BOLD,
-  ITALIC_CONTAINER_CLASSNAME,
-  REGEX_INNER_TEXT_ITALIC,
-} from "./func/const";
-
-let cursorAtLastParaNode, cursorAtCurrentParaNode;
-let cursorAtLastElement, cursorAtCurrentElement;
-let hasBoldPrefix, hasItalicPrefix;
+  hasParentClass,
+  setCaretOffset,
+} from "../func/utils";
+import { BOLD_CONTAINER_CLASSNAME, REGEX_INNER_TEXT_BOLD } from "../func/const";
+import { resetBoldPrefix, getCurrentParaNode } from ".";
 
 export function monitorBoldTailInput(e) {
   const anchorNode = window.getSelection().anchorNode;
@@ -111,6 +103,7 @@ export function initializeInlineBold() {
     const getMatchedGroups = isTextHadBoldMark(getCurrentParaNode().innerHTML);
     replaceTextAndAddMarkElements(parentNode, getMatchedGroups);
     const caretWbr = document.querySelector("#caret-wbr");
+    debugger;
     setCaretOffset(caretWbr.nextSibling, 0);
     resetBoldPrefix();
     return true;
@@ -184,48 +177,4 @@ export function isBoldMarkSpan(node) {
     return true;
   }
   return false;
-}
-
-export function monitorPrefix(e) {
-  let sel = window.getSelection();
-  let currText = sel.anchorNode.textContent;
-  let newText = currText.slice(0, sel.anchorOffset);
-  console.log("before input", newText);
-
-  const hasBold = /\*{2}$/.test(newText);
-  if (!hasBoldPrefix && hasBold) {
-    hasBoldPrefix = true;
-    hasItalicPrefix = false;
-    console.log("set hasBoldPrefix");
-    return;
-  }
-  if (!hasBoldPrefix && !hasItalicPrefix) {
-    hasItalicPrefix = true;
-  }
-}
-
-export function getInlinePrefix() {
-  return {
-    bold: hasBoldPrefix,
-    italic: hasItalicPrefix,
-  };
-}
-
-export function resetBoldPrefix() {
-  hasBoldPrefix = false;
-  console.log("reset hasBoldPrefix");
-}
-
-export function resetItalicPrefix() {
-  hasItalicPrefix = false;
-  console.log("reset hasItalicPrefix");
-}
-
-export function getCurrentCursorNodeName() {
-  const node = getElementNode();
-  return node.nodeName;
-}
-
-export function isParaChange() {
-  return cursorAtCurrentParaNode != cursorAtLastParaNode;
 }

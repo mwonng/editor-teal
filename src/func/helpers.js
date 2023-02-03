@@ -1,19 +1,22 @@
-import { getElementNode } from "./eventHelpers";
 import {
   getInlinePrefix,
-  initializeInlineBold,
-  initializeInlineItalic,
-  monitorBoldTailInput,
-  monitorItalicTailInput,
   monitorPrefix,
   onSelectionChange,
-  removeInlineBold,
-  removeInlineItalic,
-  resetBoldPrefix,
-  resetItalicPrefix,
   setAndUpdateCursorNodeState,
   updateInlineStyleState,
-} from "./inlineHelpers";
+} from "../inlineHelper";
+import { getElementNode } from "./utils";
+import {
+  initializeInlineBold,
+  monitorBoldTailInput,
+  removeInlineBold,
+} from "../inlineHelper/boldHelper";
+
+import {
+  initializeInlineItalic,
+  monitorItalicTailInput,
+  removeInlineItalic,
+} from "../inlineHelper/italicHelper";
 
 // bindings!!
 export function bindingListeners(node) {
@@ -37,7 +40,6 @@ function onInput(e) {
     monitorPrefix(e);
     let anchorText = window.getSelection().anchorNode;
     let anchorOffset = window.getSelection().anchorOffset;
-
     anchorText.splitText(anchorOffset);
     const wbr = document.createElement("wbr");
     wbr.id = "caret-wbr";
@@ -55,22 +57,21 @@ function onInput(e) {
     caretWbr.remove();
   }
 
-  if (e.data === "_" || e.data === null || e.data === " ") {
-    let anchorText = window.getSelection().anchorNode;
-    let anchorOffset = window.getSelection().anchorOffset;
+  // if (e.data === "_" || e.data === null || e.data === " ") {
+  //   let anchorText = window.getSelection().anchorNode;
+  //   let anchorOffset = window.getSelection().anchorOffset;
 
-    anchorText.splitText(anchorOffset);
-    const wbr = document.createElement("wbr");
-    wbr.id = "caret-wbr";
-    anchorText.after(wbr);
+  //   anchorText.splitText(anchorOffset);
+  //   const wbr = document.createElement("wbr");
+  //   wbr.id = "caret-wbr";
+  //   anchorText.after(wbr);
 
-    if (getElementNode().nodeName !== "I") {
-      initializeInlineItalic();
-    }
-    const caretWbr = document.querySelector("#caret-wbr");
-    caretWbr.remove();
-    resetItalicPrefix();
-  }
+  //   if (getElementNode().nodeName !== "I") {
+  //     initializeInlineItalic();
+  //   }
+  //   const caretWbr = document.querySelector("#caret-wbr");
+  //   caretWbr.remove();
+  // }
 
   removeInlineBold(e);
   removeInlineItalic(e);
