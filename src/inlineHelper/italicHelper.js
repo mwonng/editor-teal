@@ -54,10 +54,12 @@ export function removeInlineItalic(e) {
     wbr.id = "caret-wbr";
     if (hasParentClass(ITALIC_CONTAINER_CLASSNAME)) {
       const italicContainer = hasParentClass(ITALIC_CONTAINER_CLASSNAME);
+
+      anchorText.after(wbr);
       const innerText = italicContainer.innerText;
       const arr = [...innerText.matchAll(REGEX_INNER_TEXT_ITALIC)];
       const innerHTML = italicContainer.innerHTML;
-      anchorText.after(wbr);
+      debugger;
 
       if (!arr[0]) {
         const removedGroups = [...innerHTML.matchAll(testReg)][0].groups;
