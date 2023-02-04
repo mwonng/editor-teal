@@ -1,5 +1,5 @@
 import { getElementNode } from "./func/utils";
-import { bindingListeners } from "./func/helpers";
+import { bindingListeners, outputMarkdown } from "./func/helpers";
 import { addNewParagraph } from "./func/utils";
 
 class Editor {
@@ -57,6 +57,10 @@ class Editor {
         `;
     let freeStyleArea = document.getElementById("free-style");
     addNewParagraph("Lorem ipsum dolor sit amet, consectetur adipiscing.");
+    let markdownArea = document.createElement("div");
+    markdownArea.id = "markdown-review";
+    freeStyleArea.after(markdownArea);
+    outputMarkdown();
     bindingListeners(freeStyleArea);
   }
 }

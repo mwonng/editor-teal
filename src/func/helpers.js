@@ -4,7 +4,7 @@ import {
   onSelectionChange,
   setAndUpdateCursorNodeState,
 } from "../inlineHelper";
-import { getElementNode } from "./utils";
+import { getElementNode, appendTextNode, getEditorElement } from "./utils";
 import {
   initializeInlineBold,
   monitorBoldTailInput,
@@ -31,12 +31,19 @@ export function bindingListeners(node) {
   allListeners.forEach((item) => node.addEventListener(item.key, item.action));
 }
 
+export function outputMarkdown() {
+  const editorElement = getEditorElement();
+  const previewElement = document.getElementById("markdown-review");
+  previewElement.innerText = editorElement.innerText;
+}
+
 function onInput(e) {
   console.log(e);
   if (e.inputType === "insertParagraph") {
     return;
   }
 
+  appendTextNode();
   if (e.data === "*" || e.data == null) {
     monitorPrefix(e);
     let anchorText = window.getSelection().anchorNode;
@@ -86,10 +93,12 @@ function onMouseClick(e) {
   setAndUpdateCursorNodeState();
   updateInlineStyleState();
   updateInlineItalicStyleState();
+  outputMarkdown();
 }
 
 function onKeyPressed(e) {
   setAndUpdateCursorNodeState();
   updateInlineStyleState();
   updateInlineItalicStyleState();
+  outputMarkdown();
 }

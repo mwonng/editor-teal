@@ -85,14 +85,20 @@ export function hasParentClass(className, node) {
 
 export function hasClassNextSibling(className) {
   let anchorNode = window.getSelection().anchorNode;
-  if (!anchorNode.nextElementSibling) {
+  let nextSiblingNode = anchorNode.nextSibling;
+  if (!nextSiblingNode) {
     return false;
   }
+
+  if (nextSiblingNode.nodeType === 3 && nextSiblingNode.textContent === "") {
+    nextSiblingNode = nextSiblingNode.nextSibling;
+  }
+
   if (
-    anchorNode.nextElementSibling.classList &&
-    anchorNode.nextElementSibling.classList.contains(className)
+    nextSiblingNode.classList &&
+    nextSiblingNode.classList.contains(className)
   ) {
-    return anchorNode.nextElementSibling;
+    return nextSiblingNode;
   }
   return false;
 }
@@ -109,4 +115,25 @@ export function hasClassPreviousSibling(className) {
     return anchorNode.previousSibling;
   }
   return false;
+}
+
+/**
+ * this function to protect everytime when marks match and trigger, it should always a full textNode been select. sometimes text might be split into two or more, this feature just append sibling node into one if it is textNode
+ * @param {textNode} textNode
+ * @returns {void}
+ */
+export function appendTextNode(textNode, offset) {
+  const anchorOffset = window.getSelection().anchorOffset;
+  const anchorNode = textNode ? textNode : window.getSelection().anchorNode;
+  let nextTextNode = anchorNode.nextSibling;
+  let manualOffset = offset == undefined ? anchorOffset : offset;
+  while (nextTextNode && nextTextNode.nodeType === 3) {
+    const nodeToRemove = nextTextNode;
+    anchorNode.textContent += nextTextNode.textContent;
+    nextTextNode = nextTextNode.nextSibling;
+    nodeToRemove.remove();
+  }
+
+  const sel = window.getSelection();
+  sel.setBaseAndExtent(anchorNode, manualOffset, anchorNode, manualOffset);
 }
