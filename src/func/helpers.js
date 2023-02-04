@@ -3,6 +3,7 @@ import {
   monitorPrefix,
   onSelectionChange,
   setAndUpdateCursorNodeState,
+  removeLastParagraphInlineStyle,
 } from "../inlineHelper";
 import { getElementNode, appendTextNode, getEditorElement } from "./utils";
 import {
@@ -24,6 +25,7 @@ export function bindingListeners(node) {
   let allListeners = [
     { key: "input", action: onInput },
     { key: "click", action: onMouseClick },
+    { key: "blur", action: onBlur },
     { key: "selectionchange", action: onSelectionChange },
     { key: "keyup", action: onKeyPressed },
   ];
@@ -35,6 +37,11 @@ export function outputMarkdown() {
   const editorElement = getEditorElement();
   const previewElement = document.getElementById("markdown-review");
   previewElement.innerText = editorElement.innerText;
+}
+
+function onBlur(e) {
+  console.log("onBlur remove");
+  removeLastParagraphInlineStyle();
 }
 
 function onInput(e) {

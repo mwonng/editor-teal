@@ -3,6 +3,7 @@ import { getElementNode } from "../func/utils";
 let cursorAtLastParaNode, cursorAtCurrentParaNode;
 let cursorAtLastElement, cursorAtCurrentElement;
 let hasBoldPrefix, hasItalicPrefix;
+let lastPara, currPara;
 
 export function getCurrentParaNode() {
   let currentNode = window.getSelection().anchorNode;
@@ -19,6 +20,10 @@ export function setAndUpdateCursorNodeState() {
   const anchorOffset = window.getSelection().anchorOffset;
   const currentCursorNode =
     anchorElement.nodeName !== "P" ? anchorElement.parentNode : anchorElement;
+  const currentParaNode = getCurrentParaNode();
+  lastPara = currPara;
+  currPara = currentParaNode;
+
   cursorAtLastParaNode = cursorAtCurrentParaNode;
   cursorAtCurrentParaNode = currentCursorNode;
   cursorAtLastElement = cursorAtCurrentElement;
@@ -31,6 +36,8 @@ export function getCursorState() {
     last: cursorAtLastParaNode,
     cursorElement: cursorAtCurrentElement,
     lastElement: cursorAtLastElement,
+    lastPara: lastPara,
+    currPara: currPara,
   };
 }
 
@@ -85,4 +92,12 @@ export function getCurrentCursorNodeName() {
 
 export function isParaChange() {
   return cursorAtCurrentParaNode != cursorAtLastParaNode;
+}
+
+export function removeLastParagraphInlineStyle() {
+  const currParagraphNode = getCursorState().lastPara;
+  console.log("currParagraphNode", currParagraphNode);
+  currParagraphNode.querySelectorAll(".marks-expend").forEach((e) => {
+    e.classList.remove("marks-expend");
+  });
 }
