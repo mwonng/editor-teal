@@ -13,4 +13,5 @@ export const MARK_EXPEND_CLASSNAME = "marks-expend";
 export const BOLD_TAGNAME = "STRONG";
 export const ITALIC_TAGNAME = "EM";
 export const REGEX_INNER_TEXT_BOLD = /\*{2}.*\*{2}/g;
-export const REGEX_INNER_TEXT_ITALIC = /[\*\_]{1}.*[\*\_]{1}/g;
+export const REGEX_INNER_TEXT_ITALIC =
+  /(?<![\*\_])[\*\_{1}](?![\*\_]).*(?<![\*\_])[\*\_{1}](?![\*\_])/g;

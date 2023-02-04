@@ -47,36 +47,73 @@ export function removeInlineItalic(e) {
     e.inputType === "deleteContentBackward" ||
     e.inputType === "deleteContentForward"
   ) {
+    let anchorText = window.getSelection().anchorNode;
+    let testReg =
+      /(?:.*\>(?<p>\*{1})\<.*)?(?:<em>(?<m>.*)<\/em>)(?:.*\>(?<n>\*{1})\<.*)?/g;
+    debugger;
+    const wbr = document.createElement("wbr");
+    wbr.id = "caret-wbr";
     if (hasParentClass(ITALIC_CONTAINER_CLASSNAME)) {
-      let anchorText = window.getSelection().anchorNode;
-      const wbr = document.createElement("wbr");
-      wbr.id = "caret-wbr";
-      anchorText.after(wbr);
-
       const italicContainer = hasParentClass(ITALIC_CONTAINER_CLASSNAME);
       const innerText = italicContainer.innerText;
       const innerHTML = italicContainer.innerHTML;
-      const afterFilter = innerHTML.replace(/<((?!wbr)[^>]+)>/g, "");
-      const afterFilterIndex = afterFilter.indexOf("<wbr");
       const arr = [...innerText.matchAll(REGEX_INNER_TEXT_ITALIC)];
+      anchorText.after(wbr);
 
       if (!arr[0]) {
-        console.log("not matched");
-        let textNode = document.createTextNode(innerText);
-        italicContainer.parentNode.replaceChild(textNode, italicContainer);
-        setCaretOffset(textNode, afterFilterIndex);
+        const removedGroups = [...innerHTML.matchAll(testReg)][0].groups;
+        const emElement = document.createElement("em");
+
+        italicContainer.parentNode.replaceChild(emElement, italicContainer);
+
+        if (removedGroups.p) {
+          emElement.before(removedGroups.p);
+        }
+        if (removedGroups.n) {
+          emElement.after(removedGroups.n);
+        }
+
+        emElement.outerHTML = removedGroups.m;
+
+        let caretWbr = document.getElementById("caret-wbr");
+        if (caretWbr.nextSibling) {
+          setCaretOffset(caretWbr.nextSibling, 0);
+        } else if (caretWbr.parentNode && caretWbr.parentNode.nextSibling) {
+          setCaretOffset(caretWbr.parentNode.nextSibling, 0);
+        }
         setItalicPrefix();
+        caretWbr.remove();
       }
     } else if (hasClassNextSibling(ITALIC_CONTAINER_CLASSNAME)) {
       const italicContainer = hasClassNextSibling(ITALIC_CONTAINER_CLASSNAME);
       const innerText = italicContainer.innerText;
+      const innerHTML = italicContainer.innerHTML;
       const arr = [...innerText.matchAll(REGEX_INNER_TEXT_ITALIC)];
+      anchorText.after(wbr);
 
       if (!arr[0]) {
-        let textNode = document.createTextNode(innerText);
-        italicContainer.parentNode.replaceChild(textNode, italicContainer);
-        setCaretOffset(textNode, 0);
+        const removedGroups = [...innerHTML.matchAll(testReg)][0].groups;
+        const emElement = document.createElement("em");
+
+        italicContainer.parentNode.replaceChild(emElement, italicContainer);
+
+        if (removedGroups.p) {
+          emElement.before(removedGroups.p);
+        }
+        if (removedGroups.n) {
+          emElement.after(removedGroups.n);
+        }
+
+        emElement.outerHTML = removedGroups.m;
+
+        let caretWbr = document.getElementById("caret-wbr");
+        if (caretWbr.nextSibling) {
+          setCaretOffset(caretWbr.nextSibling, 0);
+        } else if (caretWbr.parentNode && caretWbr.parentNode.nextSibling) {
+          setCaretOffset(caretWbr.parentNode.nextSibling, 0);
+        }
         setItalicPrefix();
+        caretWbr.remove();
       }
     }
   }
@@ -98,10 +135,11 @@ export function removeInlineItalic(e) {
  */
 export function isTextHaddItalicMark(text) {
   const regexp =
-    /(?<p>[\*\_]{1})(?<m>(?=[^\s\*\_<])(?!<\/span>).*?[^\s\*\_>])(?<n>[\*\_]{1})/g;
+    /(?<p>[\*\_]{1})(?<m>(?:\<wbr.*)?(?=[^\s\*\_<])(?!<\/span>).*?[^\s\*\_>])(?<n>[\*\_]{1})/g;
 
   const arr = [...text.matchAll(regexp)];
   console.log("test result", arr);
+  debugger;
   if (!arr[0]) {
     return false;
   }
@@ -153,7 +191,6 @@ export function updateInlineItalicStyleState() {
     hasClassNextSibling("inline-md-italic") &&
     anchorOffset === anchorNode.textContent.length
   ) {
-    debugger;
     const neighbor = hasClassNextSibling("inline-md-italic");
     neighbor.classList.add("marks-expend");
   } else if (

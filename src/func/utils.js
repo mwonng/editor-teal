@@ -95,6 +95,7 @@ export function hasClassNextSibling(className) {
   }
 
   if (
+    nextSiblingNode &&
     nextSiblingNode.classList &&
     nextSiblingNode.classList.contains(className)
   ) {

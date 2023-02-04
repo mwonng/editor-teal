@@ -63,6 +63,7 @@ export function removeInlineBold(e) {
         setCaretOffset(textNode, afterFilterIndex);
         setBoldPrefix();
       }
+      wbr.remove();
     } else if (hasClassNextSibling(BOLD_CONTAINER_CLASSNAME)) {
       const boldContainer = hasClassNextSibling(BOLD_CONTAINER_CLASSNAME);
       const innerText = boldContainer.innerText;
@@ -106,13 +107,13 @@ export function isTextHadBoldMark(text) {
 }
 
 export function initializeInlineBold() {
+  debugger;
   const allText = isTextHadBoldMark(getCurrentParaNode().innerHTML);
   if (allText) {
     const parentNode = getElementNode();
     const getMatchedGroups = isTextHadBoldMark(getCurrentParaNode().innerHTML);
     replaceTextAndAddMarkElements(parentNode, getMatchedGroups);
     const caretWbr = document.querySelector("#caret-wbr");
-    debugger;
     setCaretOffset(caretWbr.nextSibling, 0);
     resetBoldPrefix();
     return true;

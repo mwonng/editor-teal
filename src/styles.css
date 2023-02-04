@@ -10,9 +10,9 @@ body {
 }
 
 p {
-  line-height: 2rem;
+  line-height: 1.2;
   font-size: 1.2rem;
-  height: 2rem;
+
   margin: 5px 10px;
   padding: 5px;
 }
@@ -45,17 +45,22 @@ p {
   width: 0;
   display: inline-block;
   overflow: hidden;
-  transition: all 0.15s ease-in-out;
+  /* transition: all 0.15s ease-in-out; */
 }
 
 .marks-expend span.bold-mark,
 .marks-expend span.italic-mark {
-  color: palevioletred;
   height: auto;
   width: auto;
   display: inline;
 }
 
+.marks-expend span.bold-mark {
+  color: palevioletred;
+}
+.marks-expend span.italic-mark {
+  color: darkcyan;
+}
 .withTagName {
   color: teal;
   font-size: 1em;
