@@ -40,40 +40,55 @@ export function monitorBoldTailInput(e) {
 }
 
 export function removeInlineBold(e) {
+  let testReg =
+    /(?:.*\>(?<p>\*(?:<wbr.*)?\*?)\<.*)?(?:<strong>(?<m>.*(?:(\<wbr.*))?)<\/strong>)(?:.*\>(?<n>\*(?:<wbr.*)?\*?)<.*)?/g;
+
   if (
     e.inputType === "deleteContentBackward" ||
     e.inputType === "deleteContentForward"
   ) {
-    if (hasParentClass(BOLD_CONTAINER_CLASSNAME)) {
+    debugger;
+    if (
+      hasParentClass(BOLD_CONTAINER_CLASSNAME) ||
+      hasClassNextSibling(BOLD_CONTAINER_CLASSNAME)
+    ) {
+      let boldContainer;
+      if (hasParentClass(BOLD_CONTAINER_CLASSNAME)) {
+        boldContainer = hasParentClass(BOLD_CONTAINER_CLASSNAME);
+      }
+      if (hasClassNextSibling(BOLD_CONTAINER_CLASSNAME)) {
+        boldContainer = hasClassNextSibling(BOLD_CONTAINER_CLASSNAME);
+      }
+
       let anchorText = window.getSelection().anchorNode;
+      const innerText = boldContainer.innerText;
+
       const wbr = document.createElement("wbr");
       wbr.id = "caret-wbr";
       anchorText.after(wbr);
-      const boldContainer = hasParentClass(BOLD_CONTAINER_CLASSNAME);
-      const innerText = boldContainer.innerText;
+
       const innerHTML = boldContainer.innerHTML;
-      const afterFilter = innerHTML.replace(/<((?!wbr)[^>]+)>/g, "");
-      const afterFilterIndex = afterFilter.indexOf("<wbr");
-      console.log("afterFilter", afterFilter, afterFilterIndex);
+
       const arr = [...innerText.matchAll(REGEX_INNER_TEXT_BOLD)];
       if (!arr[0]) {
-        console.log("not matched");
-        let textNode = document.createTextNode(innerText);
-        boldContainer.parentNode.replaceChild(textNode, boldContainer);
-        setCaretOffset(textNode, afterFilterIndex);
+        const removedGroups = [...innerHTML.matchAll(testReg)][0].groups;
+        const strongElement = document.createElement("strong");
+
+        boldContainer.parentNode.replaceChild(strongElement, boldContainer);
+
+        strongElement.outerHTML =
+          removedGroups.p + removedGroups.m + removedGroups.n;
+
+        let caretWbr = document.getElementById("caret-wbr");
+        if (caretWbr.nextSibling) {
+          setCaretOffset(caretWbr.nextSibling, 0);
+        } else if (caretWbr.parentNode && caretWbr.parentNode.nextSibling) {
+          setCaretOffset(caretWbr.parentNode.nextSibling, 0);
+        }
         setBoldPrefix();
+        caretWbr.remove();
       }
-      wbr.remove();
-    } else if (hasClassNextSibling(BOLD_CONTAINER_CLASSNAME)) {
-      const boldContainer = hasClassNextSibling(BOLD_CONTAINER_CLASSNAME);
-      const innerText = boldContainer.innerText;
-      const arr = [...innerText.matchAll(REGEX_INNER_TEXT_BOLD)];
-      if (!arr[0]) {
-        let textNode = document.createTextNode(innerText);
-        boldContainer.parentNode.replaceChild(textNode, boldContainer);
-        setCaretOffset(textNode, 0);
-        setBoldPrefix();
-      }
+      wbr && wbr.remove();
     }
   }
 }
@@ -107,7 +122,6 @@ export function isTextHadBoldMark(text) {
 }
 
 export function initializeInlineBold() {
-  debugger;
   const allText = isTextHadBoldMark(getCurrentParaNode().innerHTML);
   if (allText) {
     const parentNode = getElementNode();

@@ -50,14 +50,13 @@ export function removeInlineItalic(e) {
     let anchorText = window.getSelection().anchorNode;
     let testReg =
       /(?:.*\>(?<p>\*{1})\<.*)?(?:<em>(?<m>.*)<\/em>)(?:.*\>(?<n>\*{1})\<.*)?/g;
-    debugger;
     const wbr = document.createElement("wbr");
     wbr.id = "caret-wbr";
     if (hasParentClass(ITALIC_CONTAINER_CLASSNAME)) {
       const italicContainer = hasParentClass(ITALIC_CONTAINER_CLASSNAME);
       const innerText = italicContainer.innerText;
-      const innerHTML = italicContainer.innerHTML;
       const arr = [...innerText.matchAll(REGEX_INNER_TEXT_ITALIC)];
+      const innerHTML = italicContainer.innerHTML;
       anchorText.after(wbr);
 
       if (!arr[0]) {
@@ -84,6 +83,7 @@ export function removeInlineItalic(e) {
         setItalicPrefix();
         caretWbr.remove();
       }
+      wbr.remove();
     } else if (hasClassNextSibling(ITALIC_CONTAINER_CLASSNAME)) {
       const italicContainer = hasClassNextSibling(ITALIC_CONTAINER_CLASSNAME);
       const innerText = italicContainer.innerText;
@@ -116,6 +116,7 @@ export function removeInlineItalic(e) {
         caretWbr.remove();
       }
     }
+    wbr && wbr.remove();
   }
 }
 
@@ -139,7 +140,6 @@ export function isTextHaddItalicMark(text) {
 
   const arr = [...text.matchAll(regexp)];
   console.log("test result", arr);
-  debugger;
   if (!arr[0]) {
     return false;
   }

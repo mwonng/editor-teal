@@ -10,5 +10,4 @@
 
 ### Todo
 
-- inline hide
-- nested remove
+- delete first * in \*\*abcd *cd* efg\*\* and then add *
