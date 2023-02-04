@@ -9,7 +9,14 @@ import {
   ITALIC_CONTAINER_CLASSNAME,
   REGEX_INNER_TEXT_ITALIC,
 } from "../func/const";
-import { getCursorState, getCurrentParaNode } from ".";
+import {
+  getCurrentCursorNodeName,
+  getCurrentParaNode,
+  getCursorState,
+  resetItalicPrefix,
+  isParaChange,
+  setItalicPrefix,
+} from ".";
 
 export function monitorItalicTailInput(e) {
   const anchorNode = window.getSelection().anchorNode;
@@ -58,6 +65,7 @@ export function removeInlineItalic(e) {
         let textNode = document.createTextNode(innerText);
         italicContainer.parentNode.replaceChild(textNode, italicContainer);
         setCaretOffset(textNode, afterFilterIndex);
+        setItalicPrefix();
       }
     } else if (hasClassNextSibling(ITALIC_CONTAINER_CLASSNAME)) {
       const italicContainer = hasClassNextSibling(ITALIC_CONTAINER_CLASSNAME);
@@ -68,6 +76,7 @@ export function removeInlineItalic(e) {
         let textNode = document.createTextNode(innerText);
         italicContainer.parentNode.replaceChild(textNode, italicContainer);
         setCaretOffset(textNode, 0);
+        setItalicPrefix();
       }
     }
   }
@@ -129,27 +138,34 @@ export function replaceTextAndAddItalicElements(
   );
 }
 
-export function updateInlineStyleState() {
+export function updateInlineItalicStyleState() {
   let anchorNode = window.getSelection().anchorNode;
   let anchorOffset = window.getSelection().anchorOffset;
   let currParagraphNode = getCurrentParaNode();
-  if (hasParentClass("inline-md-bold")) {
-    const parent = hasParentClass("inline-md-bold");
+
+  if (hasParentClass("inline-md-italic")) {
+    const parent = hasParentClass("inline-md-italic");
     parent.classList.add("marks-expend");
     if (isParaChange()) {
       removeMarkExpendFromNode();
     }
   } else if (
-    hasClassNextSibling("inline-md-bold") &&
+    hasClassNextSibling("inline-md-italic") &&
     anchorOffset === anchorNode.textContent.length
   ) {
-    const neighbor = hasClassNextSibling("inline-md-bold");
+    debugger;
+    const neighbor = hasClassNextSibling("inline-md-italic");
     neighbor.classList.add("marks-expend");
-  } else if (hasClassPreviousSibling("inline-md-bold") && anchorOffset === 0) {
-    const neighbor = hasClassPreviousSibling("inline-md-bold");
+  } else if (
+    hasClassPreviousSibling("inline-md-italic") &&
+    anchorOffset === 0
+  ) {
+    const neighbor = hasClassPreviousSibling("inline-md-italic");
     neighbor.classList.add("marks-expend");
-  } else if (currParagraphNode.querySelectorAll(".inline-md-bold").length > 0) {
-    currParagraphNode.querySelectorAll(".inline-md-bold").forEach((e) => {
+  } else if (
+    currParagraphNode.querySelectorAll(".inline-md-italic").length > 0
+  ) {
+    currParagraphNode.querySelectorAll(".inline-md-italic").forEach((e) => {
       e.classList.remove("marks-expend");
     });
   } else {
@@ -166,7 +182,7 @@ export function updateInlineStyleState() {
 export function removeMarkExpendFromNode() {
   const lastPositioNode = getCursorState().last;
   const inlineMarkdownContainer = hasParentClass(
-    "inline-md-bold",
+    "inline-md-italic",
     lastPositioNode
   );
   if (inlineMarkdownContainer) {
@@ -174,8 +190,8 @@ export function removeMarkExpendFromNode() {
   }
 }
 
-export function isBoldMarkSpan(node) {
-  if (node && node.classList && node.classList.contains("bold-mark")) {
+export function isItalicMarkSpan(node) {
+  if (node && node.classList && node.classList.contains("italic-mark")) {
     return true;
   }
   return false;

@@ -58,6 +58,15 @@ export function getInlinePrefix() {
     italic: hasItalicPrefix,
   };
 }
+export function setBoldPrefix() {
+  hasBoldPrefix = true;
+  hasItalicPrefix = false;
+}
+
+export function setItalicPrefix() {
+  hasBoldPrefix = false;
+  hasItalicPrefix = true;
+}
 
 export function resetBoldPrefix() {
   hasBoldPrefix = false;

@@ -56,7 +56,7 @@ class Editor {
         <h1>JS loaded!</h1>
         `;
     let freeStyleArea = document.getElementById("free-style");
-    addNewParagraph("abcdefg");
+    addNewParagraph("Lorem ipsum dolor sit amet, consectetur adipiscing.");
     bindingListeners(freeStyleArea);
   }
 }

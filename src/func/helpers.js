@@ -3,19 +3,20 @@ import {
   monitorPrefix,
   onSelectionChange,
   setAndUpdateCursorNodeState,
-  updateInlineStyleState,
 } from "../inlineHelper";
 import { getElementNode } from "./utils";
 import {
   initializeInlineBold,
   monitorBoldTailInput,
   removeInlineBold,
+  updateInlineStyleState,
 } from "../inlineHelper/boldHelper";
 
 import {
   initializeInlineItalic,
   monitorItalicTailInput,
   removeInlineItalic,
+  updateInlineItalicStyleState,
 } from "../inlineHelper/italicHelper";
 
 // bindings!!
@@ -84,9 +85,11 @@ function onInput(e) {
 function onMouseClick(e) {
   setAndUpdateCursorNodeState();
   updateInlineStyleState();
+  updateInlineItalicStyleState();
 }
 
 function onKeyPressed(e) {
   setAndUpdateCursorNodeState();
   updateInlineStyleState();
+  updateInlineItalicStyleState();
 }

@@ -6,7 +6,14 @@ import {
   setCaretOffset,
 } from "../func/utils";
 import { BOLD_CONTAINER_CLASSNAME, REGEX_INNER_TEXT_BOLD } from "../func/const";
-import { resetBoldPrefix, getCurrentParaNode } from ".";
+import {
+  getCurrentCursorNodeName,
+  getCurrentParaNode,
+  getCursorState,
+  resetBoldPrefix,
+  isParaChange,
+  setBoldPrefix,
+} from ".";
 
 export function monitorBoldTailInput(e) {
   const anchorNode = window.getSelection().anchorNode;
@@ -54,6 +61,7 @@ export function removeInlineBold(e) {
         let textNode = document.createTextNode(innerText);
         boldContainer.parentNode.replaceChild(textNode, boldContainer);
         setCaretOffset(textNode, afterFilterIndex);
+        setBoldPrefix();
       }
     } else if (hasClassNextSibling(BOLD_CONTAINER_CLASSNAME)) {
       const boldContainer = hasClassNextSibling(BOLD_CONTAINER_CLASSNAME);
@@ -63,6 +71,7 @@ export function removeInlineBold(e) {
         let textNode = document.createTextNode(innerText);
         boldContainer.parentNode.replaceChild(textNode, boldContainer);
         setCaretOffset(textNode, 0);
+        setBoldPrefix();
       }
     }
   }
