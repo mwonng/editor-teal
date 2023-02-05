@@ -23,7 +23,8 @@ export function monitorBoldTailInput(e) {
   if (
     anchorOffset === 3 &&
     inlineParentContainer &&
-    anchorElement.nodeName !== "STRONG"
+    anchorElement.nodeName !== "STRONG" &&
+    anchorElement.nodeName !== "EM"
   ) {
     const inputChar = e.data;
     anchorNode.textContent = anchorNode.textContent.slice(0, 2);
@@ -47,7 +48,6 @@ export function removeInlineBold(e) {
     e.inputType === "deleteContentBackward" ||
     e.inputType === "deleteContentForward"
   ) {
-    debugger;
     if (
       hasParentClass(BOLD_CONTAINER_CLASSNAME) ||
       hasClassNextSibling(BOLD_CONTAINER_CLASSNAME)

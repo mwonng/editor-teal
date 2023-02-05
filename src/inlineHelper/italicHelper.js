@@ -26,7 +26,8 @@ export function monitorItalicTailInput(e) {
   if (
     anchorOffset === 2 &&
     inlineParentContainer &&
-    anchorElement.nodeName !== "EM"
+    anchorElement.nodeName !== "EM" &&
+    anchorElement.nodeName !== "STRONG"
   ) {
     const inputChar = e.data;
     anchorNode.textContent = anchorNode.textContent.slice(0, 1);
