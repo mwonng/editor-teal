@@ -1,5 +1,4 @@
 export function getElementNode() {
-  // this function call will return parent node if current selection is text node
   const node = document.getSelection().anchorNode;
   return node.nodeType === 3 ? node.parentNode : node;
 }

@@ -10,4 +10,5 @@
 
 ### Todo
 
-- delete first * in \*\*abcd *cd* efg\*\* and then add *
+- when bold prefix enabled, how to switch to italic fix?
+- input \* inside inline style

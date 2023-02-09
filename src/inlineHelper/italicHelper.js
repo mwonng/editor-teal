@@ -9,14 +9,6 @@ import {
   ITALIC_CONTAINER_CLASSNAME,
   REGEX_INNER_TEXT_ITALIC,
 } from "../func/const";
-import {
-  getCurrentCursorNodeName,
-  getCurrentParaNode,
-  getCursorState,
-  resetItalicPrefix,
-  isParaChange,
-  setItalicPrefix,
-} from ".";
 
 export function monitorItalicTailInput(e) {
   const anchorNode = window.getSelection().anchorNode;
@@ -43,7 +35,7 @@ export function monitorItalicTailInput(e) {
   }
 }
 
-export function removeInlineItalic(e) {
+export function removeInlineItalic(e, setItalicPrefix) {
   if (
     e.inputType === "deleteContentBackward" ||
     e.inputType === "deleteContentForward"
@@ -60,7 +52,6 @@ export function removeInlineItalic(e) {
       const innerText = italicContainer.innerText;
       const arr = [...innerText.matchAll(REGEX_INNER_TEXT_ITALIC)];
       const innerHTML = italicContainer.innerHTML;
-      debugger;
 
       if (!arr[0]) {
         const removedGroups = [...innerHTML.matchAll(testReg)][0].groups;
@@ -150,21 +141,21 @@ export function isTextHaddItalicMark(text) {
   return { ...arr[0].groups, k: arr[0][0] };
 }
 
-export function initializeInlineItalic() {
-  const allText = isTextHaddItalicMark(getCurrentParaNode().innerHTML);
-  if (allText) {
-    const parentNode = getElementNode();
-    const getMatchedGroups = isTextHaddItalicMark(
-      getCurrentParaNode().innerHTML
-    );
-    replaceTextAndAddItalicElements(parentNode, getMatchedGroups);
-    const caretWbr = document.querySelector("#caret-wbr");
-    setCaretOffset(caretWbr.nextSibling, 0);
-    resetItalicPrefix();
-    return true;
-  }
-  return false;
-}
+// export function initializeInlineItalic() {
+//   const allText = isTextHaddItalicMark(getCurrentParaNode().innerHTML);
+//   if (allText) {
+//     const parentNode = getElementNode();
+//     const getMatchedGroups = isTextHaddItalicMark(
+//       getCurrentParaNode().innerHTML
+//     );
+//     replaceTextAndAddItalicElements(parentNode, getMatchedGroups);
+//     const caretWbr = document.querySelector("#caret-wbr");
+//     setCaretOffset(caretWbr.nextSibling, 0);
+//     resetItalicPrefix();
+//     return true;
+//   }
+//   return false;
+// }
 
 export function replaceTextAndAddItalicElements(
   anchorParentNode,
@@ -177,57 +168,6 @@ export function replaceTextAndAddItalicElements(
     matchedGroups.k,
     newText
   );
-}
-
-export function updateInlineItalicStyleState() {
-  let anchorNode = window.getSelection().anchorNode;
-  let anchorOffset = window.getSelection().anchorOffset;
-  let currParagraphNode = getCurrentParaNode();
-
-  if (hasParentClass("inline-md-italic")) {
-    const parent = hasParentClass("inline-md-italic");
-    parent.classList.add("marks-expend");
-    if (isParaChange()) {
-      removeMarkExpendFromNode();
-    }
-  } else if (
-    hasClassNextSibling("inline-md-italic") &&
-    anchorOffset === anchorNode.textContent.length
-  ) {
-    const neighbor = hasClassNextSibling("inline-md-italic");
-    neighbor.classList.add("marks-expend");
-  } else if (
-    hasClassPreviousSibling("inline-md-italic") &&
-    anchorOffset === 0
-  ) {
-    const neighbor = hasClassPreviousSibling("inline-md-italic");
-    neighbor.classList.add("marks-expend");
-  } else if (
-    currParagraphNode.querySelectorAll(".inline-md-italic").length > 0
-  ) {
-    currParagraphNode.querySelectorAll(".inline-md-italic").forEach((e) => {
-      e.classList.remove("marks-expend");
-    });
-  } else {
-    if (
-      (getCurrentCursorNodeName() === "P" && anchorOffset !== 0) ||
-      isParaChange()
-    ) {
-      removeMarkExpendFromNode();
-    }
-  }
-  // hide marks if it leave the bold and right after inline mark style
-}
-
-export function removeMarkExpendFromNode() {
-  const lastPositioNode = getCursorState().last;
-  const inlineMarkdownContainer = hasParentClass(
-    "inline-md-italic",
-    lastPositioNode
-  );
-  if (inlineMarkdownContainer) {
-    inlineMarkdownContainer.classList.remove("marks-expend");
-  }
 }
 
 export function isItalicMarkSpan(node) {

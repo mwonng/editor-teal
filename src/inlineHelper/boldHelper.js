@@ -6,14 +6,6 @@ import {
   setCaretOffset,
 } from "../func/utils";
 import { BOLD_CONTAINER_CLASSNAME, REGEX_INNER_TEXT_BOLD } from "../func/const";
-import {
-  getCurrentCursorNodeName,
-  getCurrentParaNode,
-  getCursorState,
-  resetBoldPrefix,
-  isParaChange,
-  setBoldPrefix,
-} from ".";
 
 export function monitorBoldTailInput(e) {
   const anchorNode = window.getSelection().anchorNode;
@@ -40,7 +32,7 @@ export function monitorBoldTailInput(e) {
   }
 }
 
-export function removeInlineBold(e) {
+export function removeInlineBold(e, setBoldPrefix) {
   let testReg =
     /(?:.*\>(?<p>\*(?:<wbr.*)?\*?)\<.*)?(?:<strong>(?<m>.*(?:(\<wbr.*))?)<\/strong>)(?:.*\>(?<n>\*(?:<wbr.*)?\*?)<.*)?/g;
 
@@ -121,20 +113,6 @@ export function isTextHadBoldMark(text) {
   return { ...arr[0].groups, k: arr[0][0] };
 }
 
-export function initializeInlineBold() {
-  const allText = isTextHadBoldMark(getCurrentParaNode().innerHTML);
-  if (allText) {
-    const parentNode = getElementNode();
-    const getMatchedGroups = isTextHadBoldMark(getCurrentParaNode().innerHTML);
-    replaceTextAndAddMarkElements(parentNode, getMatchedGroups);
-    const caretWbr = document.querySelector("#caret-wbr");
-    setCaretOffset(caretWbr.nextSibling, 0);
-    resetBoldPrefix();
-    return true;
-  }
-  return false;
-}
-
 /**
  * this function replace the text with a styled fragments
  * @param {Node} parentNode the parent paragraph, usually p tag
@@ -149,51 +127,6 @@ export function replaceTextAndAddMarkElements(anchorParentNode, matchedGroups) {
     matchedGroups.k,
     newText
   );
-}
-
-export function updateInlineStyleState() {
-  let anchorNode = window.getSelection().anchorNode;
-  let anchorOffset = window.getSelection().anchorOffset;
-  let currParagraphNode = getCurrentParaNode();
-  if (hasParentClass("inline-md-bold")) {
-    const parent = hasParentClass("inline-md-bold");
-    parent.classList.add("marks-expend");
-    if (isParaChange()) {
-      removeMarkExpendFromNode();
-    }
-  } else if (
-    hasClassNextSibling("inline-md-bold") &&
-    anchorOffset === anchorNode.textContent.length
-  ) {
-    const neighbor = hasClassNextSibling("inline-md-bold");
-    neighbor.classList.add("marks-expend");
-  } else if (hasClassPreviousSibling("inline-md-bold") && anchorOffset === 0) {
-    const neighbor = hasClassPreviousSibling("inline-md-bold");
-    neighbor.classList.add("marks-expend");
-  } else if (currParagraphNode.querySelectorAll(".inline-md-bold").length > 0) {
-    currParagraphNode.querySelectorAll(".inline-md-bold").forEach((e) => {
-      e.classList.remove("marks-expend");
-    });
-  } else {
-    if (
-      (getCurrentCursorNodeName() === "P" && anchorOffset !== 0) ||
-      isParaChange()
-    ) {
-      removeMarkExpendFromNode();
-    }
-  }
-  // hide marks if it leave the bold and right after inline mark style
-}
-
-export function removeMarkExpendFromNode() {
-  const lastPositioNode = getCursorState().last;
-  const inlineMarkdownContainer = hasParentClass(
-    "inline-md-bold",
-    lastPositioNode
-  );
-  if (inlineMarkdownContainer) {
-    inlineMarkdownContainer.classList.remove("marks-expend");
-  }
 }
 
 export function isBoldMarkSpan(node) {
